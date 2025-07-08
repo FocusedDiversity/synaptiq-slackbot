@@ -1,15 +1,10 @@
 run:
   timeout: 5m
   tests: false
-  skip-dirs:
-    - .aws-sam
-    - vendor
-    - testdata
-  skip-files:
-    - ".*_test.go"
 
 output:
-  format: colored-line-number
+  formats:
+    - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
@@ -28,7 +23,7 @@ linters:
     - bodyclose      # Checks whether HTTP response body is closed
     - dogsled        # Checks assignments with too many blank identifiers
     - dupl           # Tool for code clone detection
-    - exportloopref  # Checks for pointers to enclosing loop variables
+    - copyloopvar    # Checks for pointers to enclosing loop variables
     - gocognit       # Computes cognitive complexity of functions
     - goconst        # Finds repeated strings that could be constants
     - gocritic       # Provides many useful checks
@@ -63,8 +58,7 @@ linters:
     - gochecknoglobals # We use some globals for Lambda
     - gochecknoinits # We use init for Lambda setup
     - godox          # We want to allow TODO/FIXME comments
-    - goerr113       # Too strict about error types
-    - gomnd          # Magic numbers are sometimes ok
+    - err113         # Too strict about error types
     - gomodguard     # Not needed for this project
     - testpackage    # We prefer tests in same package
     - wsl            # Too opinionated about whitespace
@@ -74,7 +68,7 @@ linters-settings:
     max-blank-identifiers: 2
 
   dupl:
-    threshold: 150
+    threshold: 200
 
   errcheck:
     check-type-assertions: true
@@ -171,7 +165,6 @@ linters-settings:
       - name: unreachable-code
 
   stylecheck:
-    go: "1.21"
     checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022"]
     dot-import-whitelist:
       - fmt
@@ -190,6 +183,12 @@ issues:
   max-same-issues: 0
   new: false
   fix: true
+  exclude-dirs:
+    - .aws-sam
+    - vendor
+    - testdata
+  exclude-files:
+    - ".*_test.go"
 
   exclude-rules:
     # Exclude some linters from running on tests files

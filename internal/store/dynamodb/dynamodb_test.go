@@ -51,7 +51,7 @@ func (m *MockDynamoDBClient) Query(ctx context.Context, params *dynamodb.QueryIn
 
 func TestSaveWorkspaceConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewDynamoDBStore(mockClient, "test-table", 30)
+	store := NewStore(mockClient, "test-table", 30)
 
 	config := &store.WorkspaceConfig{
 		TeamID:      "T123456",
@@ -75,7 +75,7 @@ func TestSaveWorkspaceConfig(t *testing.T) {
 
 func TestGetWorkspaceConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewDynamoDBStore(mockClient, "test-table", 30)
+	store := NewStore(mockClient, "test-table", 30)
 
 	t.Run("found", func(t *testing.T) {
 		mockClient.On("GetItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.GetItemInput) bool {
@@ -105,7 +105,7 @@ func TestGetWorkspaceConfig(t *testing.T) {
 
 func TestSaveChannelConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewDynamoDBStore(mockClient, "test-table", 30)
+	store := NewStore(mockClient, "test-table", 30)
 
 	config := &store.ChannelConfig{
 		TeamID:      "T123456",
@@ -137,7 +137,7 @@ func TestSaveChannelConfig(t *testing.T) {
 
 func TestCreateSession(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewDynamoDBStore(mockClient, "test-table", 30)
+	store := NewStore(mockClient, "test-table", 30)
 
 	session := &store.Session{
 		SessionID:     "sess-123",
@@ -172,7 +172,7 @@ func TestCreateSession(t *testing.T) {
 
 func TestSaveUserResponse(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewDynamoDBStore(mockClient, "test-table", 30)
+	store := NewStore(mockClient, "test-table", 30)
 
 	response := &store.UserResponse{
 		SessionID: "sess-123",
@@ -201,7 +201,7 @@ func TestSaveUserResponse(t *testing.T) {
 
 func TestGetUsersWithoutResponse(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := &DynamoDBStore{
+	store := &Store{
 		client:    mockClient,
 		tableName: "test-table",
 		ttlDays:   30,
@@ -286,7 +286,7 @@ func TestKeyGeneration(t *testing.T) {
 }
 
 func TestCalculateTTL(t *testing.T) {
-	store := &DynamoDBStore{ttlDays: 30}
+	store := &Store{ttlDays: 30}
 	baseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 
 	ttl := store.calculateTTL(baseTime)
