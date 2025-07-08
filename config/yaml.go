@@ -20,9 +20,9 @@ type yamlConfig struct {
 
 // yamlSchema represents the YAML structure
 type yamlSchema struct {
-	Version  string `yaml:"version"`
-	Bot      botSchema `yaml:"bot"`
-	Database databaseSchema `yaml:"database"`
+	Version  string          `yaml:"version"`
+	Bot      botSchema       `yaml:"bot"`
+	Database databaseSchema  `yaml:"database"`
 	Channels []channelSchema `yaml:"channels"`
 	Features map[string]bool `yaml:"features"`
 }
@@ -38,13 +38,13 @@ type databaseSchema struct {
 }
 
 type channelSchema struct {
-	ID        string `yaml:"id"`
-	Name      string `yaml:"name"`
-	Enabled   bool   `yaml:"enabled"`
+	ID        string         `yaml:"id"`
+	Name      string         `yaml:"name"`
+	Enabled   bool           `yaml:"enabled"`
 	Schedule  scheduleSchema `yaml:"schedule"`
-	Users     []userSchema `yaml:"users"`
+	Users     []userSchema   `yaml:"users"`
 	Templates templateSchema `yaml:"templates"`
-	Questions []string `yaml:"questions"`
+	Questions []string       `yaml:"questions"`
 }
 
 type scheduleSchema struct {
@@ -288,15 +288,15 @@ type channelConfig struct {
 	questions     []string
 }
 
-func (c *channelConfig) ID() string                      { return c.id }
-func (c *channelConfig) Name() string                    { return c.name }
-func (c *channelConfig) IsEnabled() bool                 { return c.enabled }
-func (c *channelConfig) Timezone() *time.Location        { return c.timezone }
-func (c *channelConfig) SummaryTime() time.Time          { return c.summaryTime }
-func (c *channelConfig) ReminderTimes() []time.Time      { return c.reminderTimes }
+func (c *channelConfig) ID() string                        { return c.id }
+func (c *channelConfig) Name() string                      { return c.name }
+func (c *channelConfig) IsEnabled() bool                   { return c.enabled }
+func (c *channelConfig) Timezone() *time.Location          { return c.timezone }
+func (c *channelConfig) SummaryTime() time.Time            { return c.summaryTime }
+func (c *channelConfig) ReminderTimes() []time.Time        { return c.reminderTimes }
 func (c *channelConfig) IsActiveDay(day time.Weekday) bool { return c.activeDays[day] }
-func (c *channelConfig) Templates() TemplateConfig       { return c.templates }
-func (c *channelConfig) Questions() []string             { return c.questions }
+func (c *channelConfig) Templates() TemplateConfig         { return c.templates }
+func (c *channelConfig) Questions() []string               { return c.questions }
 
 func (c *channelConfig) Users() []UserConfig {
 	users := make([]UserConfig, 0, len(c.users))
@@ -323,9 +323,9 @@ type userConfig struct {
 	timezone *time.Location
 }
 
-func (u *userConfig) ID() string                { return u.id }
-func (u *userConfig) Name() string              { return u.name }
-func (u *userConfig) Timezone() *time.Location  { return u.timezone }
+func (u *userConfig) ID() string               { return u.id }
+func (u *userConfig) Name() string             { return u.name }
+func (u *userConfig) Timezone() *time.Location { return u.timezone }
 
 // templateConfig implements TemplateConfig
 type templateConfig struct {

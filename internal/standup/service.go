@@ -6,19 +6,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	botcontext "github.com/synaptiq/standup-bot/context"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/store"
-	botcontext "github.com/synaptiq/standup-bot/context"
 )
 
-// Service handles standup business logic
+// Service handles standup business logic.
 type Service struct {
 	botCtx      botcontext.BotContext
 	store       store.Store
 	slackClient slack.Client
 }
 
-// NewService creates a new standup service
+// NewService creates a new standup service.
 func NewService(botCtx botcontext.BotContext, store store.Store, slackClient slack.Client) *Service {
 	return &Service{
 		botCtx:      botCtx,
@@ -27,7 +28,7 @@ func NewService(botCtx botcontext.BotContext, store store.Store, slackClient sla
 	}
 }
 
-// StartStandupSession starts a new standup session for a channel
+// StartStandupSession starts a new standup session for a channel.
 func (s *Service) StartStandupSession(ctx context.Context, channelID string) (*store.Session, error) {
 	logger := s.botCtx.Logger()
 	today := time.Now().Format("2006-01-02")
@@ -68,7 +69,7 @@ func (s *Service) StartStandupSession(ctx context.Context, channelID string) (*s
 	return session, nil
 }
 
-// OpenStandupModal opens the standup submission modal for a user
+// OpenStandupModal opens the standup submission modal for a user.
 func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, userID string) error {
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
@@ -95,7 +96,7 @@ func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, us
 	return nil
 }
 
-// SubmitStandupResponse processes a standup submission from a user
+// SubmitStandupResponse processes a standup submission from a user.
 func (s *Service) SubmitStandupResponse(ctx context.Context, submission *StandupSubmission) error {
 	logger := s.botCtx.Logger()
 
@@ -131,7 +132,7 @@ func (s *Service) SubmitStandupResponse(ctx context.Context, submission *Standup
 	return nil
 }
 
-// SendReminders sends reminders to users who haven't submitted
+// SendReminders sends reminders to users who haven't submitted.
 func (s *Service) SendReminders(ctx context.Context, channelID string, reminderTime string) error {
 	logger := s.botCtx.Logger()
 	today := time.Now().Format("2006-01-02")
@@ -172,7 +173,7 @@ func (s *Service) SendReminders(ctx context.Context, channelID string, reminderT
 	return nil
 }
 
-// PostDailySummary posts the daily standup summary
+// PostDailySummary posts the daily standup summary.
 func (s *Service) PostDailySummary(ctx context.Context, channelID string) error {
 	logger := s.botCtx.Logger()
 	today := time.Now().Format("2006-01-02")
@@ -264,7 +265,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	return nil
 }
 
-// postResponseToChannel posts a user's response to the channel
+// postResponseToChannel posts a user's response to the channel.
 func (s *Service) postResponseToChannel(ctx context.Context, submission *StandupSubmission) error {
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(submission.ChannelID)
@@ -292,7 +293,7 @@ func (s *Service) postResponseToChannel(ctx context.Context, submission *Standup
 	return err
 }
 
-// sendReminderToUser sends a reminder DM to a user
+// sendReminderToUser sends a reminder DM to a user.
 func (s *Service) sendReminderToUser(ctx context.Context, userID, channelID, channelName, reminderTime string) error {
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
@@ -345,7 +346,7 @@ func (s *Service) sendReminderToUser(ctx context.Context, userID, channelID, cha
 	return nil
 }
 
-// StandupSubmission represents a standup submission
+// StandupSubmission represents a standup submission.
 type StandupSubmission struct {
 	SessionID string
 	ChannelID string

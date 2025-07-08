@@ -10,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/synaptiq/standup-bot/internal/store"
 )
 
 // MockDynamoDBClient is a mock implementation of the DynamoDB client
@@ -176,11 +175,11 @@ func TestSaveUserResponse(t *testing.T) {
 	store := NewDynamoDBStore(mockClient, "test-table", 30)
 
 	response := &store.UserResponse{
-		SessionID:   "sess-123",
-		ChannelID:   "C123456",
-		Date:        "2024-01-15",
-		UserID:      "U123456",
-		UserName:    "alice",
+		SessionID: "sess-123",
+		ChannelID: "C123456",
+		Date:      "2024-01-15",
+		UserID:    "U123456",
+		UserName:  "alice",
 		Responses: map[string]string{
 			"q1": "Worked on feature X",
 			"q2": "Will work on feature Y",
@@ -230,10 +229,10 @@ func TestGetUsersWithoutResponse(t *testing.T) {
 
 func TestKeyGeneration(t *testing.T) {
 	tests := []struct {
-		name     string
-		fn       func() (string, string)
-		wantPK   string
-		wantSK   string
+		name   string
+		fn     func() (string, string)
+		wantPK string
+		wantSK string
 	}{
 		{
 			name: "workspace key",

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Store defines the interface for data persistence
+// Store defines the interface for data persistence.
 type Store interface {
 	// Workspace operations
 	SaveWorkspaceConfig(ctx context.Context, config *WorkspaceConfig) error
@@ -38,7 +38,7 @@ type Store interface {
 	GetUsersWithoutResponse(ctx context.Context, channelID, date string, userIDs []string) ([]string, error)
 }
 
-// Errors
+// Errors.
 var (
 	ErrNotFound        = &StoreError{Code: "NOT_FOUND", Message: "Item not found"}
 	ErrAlreadyExists   = &StoreError{Code: "ALREADY_EXISTS", Message: "Item already exists"}
@@ -46,7 +46,7 @@ var (
 	ErrOperationFailed = &StoreError{Code: "OPERATION_FAILED", Message: "Operation failed"}
 )
 
-// StoreError represents a store-specific error
+// StoreError represents a store-specific error.
 type StoreError struct {
 	Code    string
 	Message string

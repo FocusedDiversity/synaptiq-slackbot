@@ -8,15 +8,16 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	botcontext "github.com/synaptiq/standup-bot/context"
 	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
-	botcontext "github.com/synaptiq/standup-bot/context"
 )
 
 var (
-	// Global instances initialized in init()
+	// Global instances initialized in init().
 	botCtx      botcontext.BotContext
 	dataStore   store.Store
 	slackClient slack.Client
@@ -42,7 +43,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-// TaskMessage represents an async task to process
+// TaskMessage represents an async task to process.
 type TaskMessage struct {
 	Type      string                 `json:"type"`
 	ChannelID string                 `json:"channel_id"`
@@ -50,7 +51,7 @@ type TaskMessage struct {
 	Payload   map[string]interface{} `json:"payload"`
 }
 
-// handler processes SQS messages for async tasks
+// handler processes SQS messages for async tasks.
 func handler(ctx context.Context, event events.SQSEvent) error {
 	logger := botCtx.Logger()
 
@@ -144,8 +145,8 @@ func processSendWelcome(ctx context.Context, task TaskMessage) error {
 			"• You'll receive a DM reminder each morning\n" +
 			"• Use `/standup` to submit your update\n" +
 			"• A summary is posted to the channel at the end").
-		AddSection(fmt.Sprintf("*Schedule:*\n" +
-			"• Reminders: %v\n" +
+		AddSection(fmt.Sprintf("*Schedule:*\n"+
+			"• Reminders: %v\n"+
 			"• Summary: %s",
 			channel.ReminderTimes(),
 			channel.SummaryTime().Format("3:04 PM"))).
@@ -177,7 +178,10 @@ func processGenerateReport(ctx context.Context, task TaskMessage) error {
 	}
 
 	// Get report parameters
-	startDate, _ := task.Payload["start_date"].(string)
+	startDate, ok := task.Payload["start_date"].(string)
+	if !ok {
+		startDate = ""
+	}
 	endDate, _ := task.Payload["end_date"].(string)
 	reportType, _ := task.Payload["report_type"].(string)
 
@@ -214,8 +218,7 @@ func processBulkReminder(ctx context.Context, task TaskMessage) error {
 	return nil
 }
 
-// Helper function to send async tasks to this processor
-// This would be called from other Lambda functions
+// This would be called from other Lambda functions.
 func SendAsyncTask(ctx context.Context, taskType string, channelID string, userID string, payload map[string]interface{}) error {
 	task := TaskMessage{
 		Type:      taskType,

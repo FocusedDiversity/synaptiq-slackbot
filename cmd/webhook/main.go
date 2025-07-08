@@ -10,21 +10,22 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	awslambda "github.com/aws/aws-lambda-go/lambda"
+
+	botcontext "github.com/synaptiq/standup-bot/context"
 	"github.com/synaptiq/standup-bot/internal/lambda"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
-	botcontext "github.com/synaptiq/standup-bot/context"
 )
 
 var (
-	// Global instances initialized in init()
-	botCtx        botcontext.BotContext
-	dataStore     store.Store
-	slackClient   slack.Client
-	service       *standup.Service
-	verifier      *slack.RequestVerifier
-	handlerFunc   lambda.Handler
+	// Global instances initialized in init().
+	botCtx      botcontext.BotContext
+	dataStore   store.Store
+	slackClient slack.Client
+	service     *standup.Service
+	verifier    *slack.RequestVerifier
+	handlerFunc lambda.Handler
 )
 
 func init() {

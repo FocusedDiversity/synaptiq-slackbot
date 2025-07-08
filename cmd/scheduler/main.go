@@ -6,15 +6,16 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	botcontext "github.com/synaptiq/standup-bot/context"
 	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
-	botcontext "github.com/synaptiq/standup-bot/context"
 )
 
 var (
-	// Global instances initialized in init()
+	// Global instances initialized in init().
 	botCtx      botcontext.BotContext
 	dataStore   store.Store
 	slackClient slack.Client
@@ -42,7 +43,7 @@ func main() {
 	lambda.Start(handler)
 }
 
-// handler processes EventBridge scheduled events
+// handler processes EventBridge scheduled events.
 func handler(ctx context.Context, event events.CloudWatchEvent) error {
 	logger := botCtx.Logger()
 

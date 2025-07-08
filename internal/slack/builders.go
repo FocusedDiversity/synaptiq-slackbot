@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-// ModalBuilder helps build Slack modals
+// ModalBuilder helps build Slack modals.
 type ModalBuilder struct {
 	modal *Modal
 }
 
-// NewModalBuilder creates a new modal builder
+// NewModalBuilder creates a new modal builder.
 func NewModalBuilder(title string, callbackID string) *ModalBuilder {
 	return &ModalBuilder{
 		modal: &Modal{
@@ -27,7 +27,7 @@ func NewModalBuilder(title string, callbackID string) *ModalBuilder {
 	}
 }
 
-// SetSubmit sets the submit button text
+// SetSubmit sets the submit button text.
 func (b *ModalBuilder) SetSubmit(text string) *ModalBuilder {
 	b.modal.Submit = &TextBlock{
 		Type: "plain_text",
@@ -36,7 +36,7 @@ func (b *ModalBuilder) SetSubmit(text string) *ModalBuilder {
 	return b
 }
 
-// SetClose sets the close button text
+// SetClose sets the close button text.
 func (b *ModalBuilder) SetClose(text string) *ModalBuilder {
 	b.modal.Close = &TextBlock{
 		Type: "plain_text",
@@ -45,14 +45,17 @@ func (b *ModalBuilder) SetClose(text string) *ModalBuilder {
 	return b
 }
 
-// SetPrivateMetadata sets private metadata
+// SetPrivateMetadata sets private metadata.
 func (b *ModalBuilder) SetPrivateMetadata(metadata interface{}) *ModalBuilder {
-	data, _ := json.Marshal(metadata)
+	data, err := json.Marshal(metadata)
+	if err != nil {
+		return b
+	}
 	b.modal.PrivateMetadata = string(data)
 	return b
 }
 
-// AddHeader adds a header block
+// AddHeader adds a header block.
 func (b *ModalBuilder) AddHeader(text string) *ModalBuilder {
 	b.modal.Blocks = append(b.modal.Blocks, HeaderBlock{
 		Type: "header",
@@ -64,7 +67,7 @@ func (b *ModalBuilder) AddHeader(text string) *ModalBuilder {
 	return b
 }
 
-// AddSection adds a section block
+// AddSection adds a section block.
 func (b *ModalBuilder) AddSection(text string) *ModalBuilder {
 	b.modal.Blocks = append(b.modal.Blocks, SectionBlock{
 		Type: "section",
@@ -76,7 +79,7 @@ func (b *ModalBuilder) AddSection(text string) *ModalBuilder {
 	return b
 }
 
-// AddTextInput adds a text input block
+// AddTextInput adds a text input block.
 func (b *ModalBuilder) AddTextInput(blockID, actionID, label, placeholder string, multiline bool) *ModalBuilder {
 	input := InputBlock{
 		Type:    "input",
@@ -93,36 +96,37 @@ func (b *ModalBuilder) AddTextInput(blockID, actionID, label, placeholder string
 	}
 
 	if placeholder != "" {
-		element := input.Element.(PlainTextInputElement)
-		element.Placeholder = &TextBlock{
-			Type: "plain_text",
-			Text: placeholder,
+		if element, ok := input.Element.(PlainTextInputElement); ok {
+			element.Placeholder = &TextBlock{
+				Type: "plain_text",
+				Text: placeholder,
+			}
+			input.Element = element
 		}
-		input.Element = element
 	}
 
 	b.modal.Blocks = append(b.modal.Blocks, input)
 	return b
 }
 
-// Build returns the built modal
+// Build returns the built modal.
 func (b *ModalBuilder) Build() *Modal {
 	return b.modal
 }
 
-// MessageBuilder helps build Slack messages
+// MessageBuilder helps build Slack messages.
 type MessageBuilder struct {
 	blocks []Block
 }
 
-// NewMessageBuilder creates a new message builder
+// NewMessageBuilder creates a new message builder.
 func NewMessageBuilder() *MessageBuilder {
 	return &MessageBuilder{
 		blocks: []Block{},
 	}
 }
 
-// AddHeader adds a header to the message
+// AddHeader adds a header to the message.
 func (b *MessageBuilder) AddHeader(text string) *MessageBuilder {
 	b.blocks = append(b.blocks, HeaderBlock{
 		Type: "header",
@@ -135,7 +139,7 @@ func (b *MessageBuilder) AddHeader(text string) *MessageBuilder {
 	return b
 }
 
-// AddSection adds a section to the message
+// AddSection adds a section to the message.
 func (b *MessageBuilder) AddSection(text string) *MessageBuilder {
 	b.blocks = append(b.blocks, SectionBlock{
 		Type: "section",
@@ -147,7 +151,7 @@ func (b *MessageBuilder) AddSection(text string) *MessageBuilder {
 	return b
 }
 
-// AddFields adds fields to the last section
+// AddFields adds fields to the last section.
 func (b *MessageBuilder) AddFields(fields ...string) *MessageBuilder {
 	if len(b.blocks) == 0 || len(fields)%2 != 0 {
 		return b
@@ -170,18 +174,18 @@ func (b *MessageBuilder) AddFields(fields ...string) *MessageBuilder {
 	return b
 }
 
-// AddDivider adds a divider block
+// AddDivider adds a divider block.
 func (b *MessageBuilder) AddDivider() *MessageBuilder {
 	b.blocks = append(b.blocks, DividerBlock{Type: "divider"})
 	return b
 }
 
-// Build returns the built blocks
+// Build returns the built blocks.
 func (b *MessageBuilder) Build() []Block {
 	return b.blocks
 }
 
-// BuildStandupModal builds a standup submission modal
+// BuildStandupModal builds a standup submission modal.
 func BuildStandupModal(channelID, sessionID string, questions []string) *Modal {
 	metadata := StandupModalMetadata{
 		ChannelID: channelID,
@@ -206,7 +210,7 @@ func BuildStandupModal(channelID, sessionID string, questions []string) *Modal {
 	return builder.Build()
 }
 
-// BuildReminderMessage builds a reminder message
+// BuildReminderMessage builds a reminder message.
 func BuildReminderMessage(userName, channelName string, template string) []Block {
 	// Replace template variables
 	text := strings.ReplaceAll(template, "{{.UserName}}", userName)
@@ -217,7 +221,7 @@ func BuildReminderMessage(userName, channelName string, template string) []Block
 		Build()
 }
 
-// BuildSummaryMessage builds a daily summary message
+// BuildSummaryMessage builds a daily summary message.
 func BuildSummaryMessage(date string, headerTemplate string, responses []*UserResponseSummary) []Block {
 	// Replace template variables
 	header := strings.ReplaceAll(headerTemplate, "{{.Date}}", date)
@@ -253,7 +257,7 @@ func BuildSummaryMessage(date string, headerTemplate string, responses []*UserRe
 	return builder.Build()
 }
 
-// UserResponseSummary contains summary info for a user's response
+// UserResponseSummary contains summary info for a user's response.
 type UserResponseSummary struct {
 	UserID    string
 	UserName  string
@@ -261,7 +265,7 @@ type UserResponseSummary struct {
 	Time      string
 }
 
-// ParseModalSubmission parses the submission data from a modal
+// ParseModalSubmission parses the submission data from a modal.
 func ParseModalSubmission(view *View) (map[string]string, error) {
 	if view == nil || view.State == nil {
 		return nil, fmt.Errorf("invalid view state")
@@ -283,7 +287,7 @@ func ParseModalSubmission(view *View) (map[string]string, error) {
 	return responses, nil
 }
 
-// ParseModalMetadata parses the private metadata from a modal
+// ParseModalMetadata parses the private metadata from a modal.
 func ParseModalMetadata(privateMetadata string) (*StandupModalMetadata, error) {
 	var metadata StandupModalMetadata
 	if err := json.Unmarshal([]byte(privateMetadata), &metadata); err != nil {

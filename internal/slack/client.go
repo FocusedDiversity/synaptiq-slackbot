@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Client interface defines Slack API operations
+// Client interface defines Slack API operations.
 type Client interface {
 	// Message operations
 	PostMessage(ctx context.Context, channel string, opts ...MessageOption) (string, error)
@@ -36,14 +36,14 @@ type Client interface {
 	OpenDM(ctx context.Context, userID string) (string, error)
 }
 
-// client implements the Client interface
+// client implements the Client interface.
 type client struct {
 	token      string
 	httpClient *http.Client
 	baseURL    string
 }
 
-// NewClient creates a new Slack client
+// NewClient creates a new Slack client.
 func NewClient(token string) Client {
 	return &client{
 		token: token,
@@ -54,31 +54,31 @@ func NewClient(token string) Client {
 	}
 }
 
-// MessageOption is a function that modifies a message
+// MessageOption is a function that modifies a message.
 type MessageOption func(*Message)
 
-// WithText sets the message text
+// WithText sets the message text.
 func WithText(text string) MessageOption {
 	return func(m *Message) {
 		m.Text = text
 	}
 }
 
-// WithBlocks sets the message blocks
+// WithBlocks sets the message blocks.
 func WithBlocks(blocks ...Block) MessageOption {
 	return func(m *Message) {
 		m.Blocks = blocks
 	}
 }
 
-// WithThreadTS sets the thread timestamp
+// WithThreadTS sets the thread timestamp.
 func WithThreadTS(threadTS string) MessageOption {
 	return func(m *Message) {
 		m.ThreadTS = threadTS
 	}
 }
 
-// WithMetadata sets the message metadata
+// WithMetadata sets the message metadata.
 func WithMetadata(eventType string, payload map[string]interface{}) MessageOption {
 	return func(m *Message) {
 		m.Metadata = &Metadata{
@@ -88,7 +88,7 @@ func WithMetadata(eventType string, payload map[string]interface{}) MessageOptio
 	}
 }
 
-// PostMessage posts a message to a channel
+// PostMessage posts a message to a channel.
 func (c *client) PostMessage(ctx context.Context, channel string, opts ...MessageOption) (string, error) {
 	msg := &Message{
 		Channel: channel,
@@ -121,7 +121,7 @@ func (c *client) PostMessage(ctx context.Context, channel string, opts ...Messag
 	return result.TS, nil
 }
 
-// PostEphemeral posts an ephemeral message
+// PostEphemeral posts an ephemeral message.
 func (c *client) PostEphemeral(ctx context.Context, channel, userID string, opts ...MessageOption) (string, error) {
 	msg := &struct {
 		*Message
@@ -157,7 +157,7 @@ func (c *client) PostEphemeral(ctx context.Context, channel, userID string, opts
 	return result.MessageTS, nil
 }
 
-// UpdateMessage updates an existing message
+// UpdateMessage updates an existing message.
 func (c *client) UpdateMessage(ctx context.Context, channel, timestamp string, opts ...MessageOption) error {
 	msg := &struct {
 		*Message
@@ -192,7 +192,7 @@ func (c *client) UpdateMessage(ctx context.Context, channel, timestamp string, o
 	return nil
 }
 
-// DeleteMessage deletes a message
+// DeleteMessage deletes a message.
 func (c *client) DeleteMessage(ctx context.Context, channel, timestamp string) error {
 	params := map[string]interface{}{
 		"channel": channel,
@@ -220,7 +220,7 @@ func (c *client) DeleteMessage(ctx context.Context, channel, timestamp string) e
 	return nil
 }
 
-// OpenModal opens a modal dialog
+// OpenModal opens a modal dialog.
 func (c *client) OpenModal(ctx context.Context, triggerID string, modal *Modal) error {
 	params := map[string]interface{}{
 		"trigger_id": triggerID,
@@ -248,7 +248,7 @@ func (c *client) OpenModal(ctx context.Context, triggerID string, modal *Modal) 
 	return nil
 }
 
-// UpdateModal updates an existing modal
+// UpdateModal updates an existing modal.
 func (c *client) UpdateModal(ctx context.Context, viewID string, modal *Modal) error {
 	params := map[string]interface{}{
 		"view_id": viewID,
@@ -276,7 +276,7 @@ func (c *client) UpdateModal(ctx context.Context, viewID string, modal *Modal) e
 	return nil
 }
 
-// PushModal pushes a new modal onto the stack
+// PushModal pushes a new modal onto the stack.
 func (c *client) PushModal(ctx context.Context, triggerID string, modal *Modal) error {
 	params := map[string]interface{}{
 		"trigger_id": triggerID,
@@ -304,7 +304,7 @@ func (c *client) PushModal(ctx context.Context, triggerID string, modal *Modal) 
 	return nil
 }
 
-// GetUserInfo gets information about a user
+// GetUserInfo gets information about a user.
 func (c *client) GetUserInfo(ctx context.Context, userID string) (*UserInfo, error) {
 	params := map[string]string{
 		"user": userID,
@@ -332,7 +332,7 @@ func (c *client) GetUserInfo(ctx context.Context, userID string) (*UserInfo, err
 	return &result.User, nil
 }
 
-// GetUserByEmail gets user info by email
+// GetUserByEmail gets user info by email.
 func (c *client) GetUserByEmail(ctx context.Context, email string) (*UserInfo, error) {
 	params := map[string]string{
 		"email": email,
@@ -360,7 +360,7 @@ func (c *client) GetUserByEmail(ctx context.Context, email string) (*UserInfo, e
 	return &result.User, nil
 }
 
-// GetChannelInfo gets information about a channel
+// GetChannelInfo gets information about a channel.
 func (c *client) GetChannelInfo(ctx context.Context, channelID string) (*ConversationInfo, error) {
 	params := map[string]string{
 		"channel": channelID,
@@ -388,7 +388,7 @@ func (c *client) GetChannelInfo(ctx context.Context, channelID string) (*Convers
 	return &result.Channel, nil
 }
 
-// ListChannelMembers lists members of a channel
+// ListChannelMembers lists members of a channel.
 func (c *client) ListChannelMembers(ctx context.Context, channelID string) ([]string, error) {
 	var members []string
 	cursor := ""
@@ -437,7 +437,7 @@ func (c *client) ListChannelMembers(ctx context.Context, channelID string) ([]st
 	return members, nil
 }
 
-// OpenDM opens a direct message channel with a user
+// OpenDM opens a direct message channel with a user.
 func (c *client) OpenDM(ctx context.Context, userID string) (string, error) {
 	params := map[string]interface{}{
 		"users": userID,
@@ -467,7 +467,7 @@ func (c *client) OpenDM(ctx context.Context, userID string) (string, error) {
 	return result.Channel.ID, nil
 }
 
-// callAPI makes an API call with JSON body
+// callAPI makes an API call with JSON body.
 func (c *client) callAPI(ctx context.Context, method string, params interface{}) ([]byte, error) {
 	body, err := json.Marshal(params)
 	if err != nil {
@@ -500,7 +500,7 @@ func (c *client) callAPI(ctx context.Context, method string, params interface{})
 	return respBody, nil
 }
 
-// callAPIWithParams makes an API call with URL parameters
+// callAPIWithParams makes an API call with URL parameters.
 func (c *client) callAPIWithParams(ctx context.Context, method string, params map[string]string) ([]byte, error) {
 	u, err := url.Parse(c.baseURL + "/" + method)
 	if err != nil {
@@ -513,7 +513,7 @@ func (c *client) callAPIWithParams(ctx context.Context, method string, params ma
 	}
 	u.RawQuery = q.Encode()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}

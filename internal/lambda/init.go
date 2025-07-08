@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+
 	botconfig "github.com/synaptiq/standup-bot/config"
 	botcontext "github.com/synaptiq/standup-bot/context"
 	"github.com/synaptiq/standup-bot/internal/slack"
@@ -15,7 +16,7 @@ import (
 	dynamodbstore "github.com/synaptiq/standup-bot/internal/store/dynamodb"
 )
 
-// InitConfig contains initialization configuration
+// InitConfig contains initialization configuration.
 type InitConfig struct {
 	ConfigPath    string
 	TableName     string
@@ -23,7 +24,7 @@ type InitConfig struct {
 	SlackTokenEnv string
 }
 
-// DefaultInitConfig returns default initialization config
+// DefaultInitConfig returns default initialization config.
 func DefaultInitConfig() InitConfig {
 	return InitConfig{
 		ConfigPath:    os.Getenv("CONFIG_PATH"),
@@ -33,7 +34,7 @@ func DefaultInitConfig() InitConfig {
 	}
 }
 
-// Initialize initializes all components for Lambda
+// Initialize initializes all components for Lambda.
 func Initialize(ctx context.Context, initCfg InitConfig) (botcontext.BotContext, store.Store, slack.Client, error) {
 	// Load configuration
 	if initCfg.ConfigPath == "" {
@@ -94,7 +95,7 @@ func Initialize(ctx context.Context, initCfg InitConfig) (botcontext.BotContext,
 	return botCtx, dataStore, slackClient, nil
 }
 
-// dynamoDBClient wraps the store to implement botcontext.DynamoDBClient
+// dynamoDBClient wraps the store to implement botcontext.DynamoDBClient.
 type dynamoDBClient struct {
 	store store.Store
 }
@@ -113,7 +114,7 @@ func (c *dynamoDBClient) Query(ctx context.Context, params interface{}) ([]inter
 	return nil, fmt.Errorf("not implemented")
 }
 
-// slackClientWrapper wraps the slack client to implement botcontext.SlackClient
+// slackClientWrapper wraps the slack client to implement botcontext.SlackClient.
 type slackClientWrapper struct {
 	client slack.Client
 }
@@ -142,7 +143,7 @@ func (w *slackClientWrapper) OpenModal(ctx context.Context, triggerID string, vi
 	return w.client.OpenModal(ctx, triggerID, modal)
 }
 
-// awsSecretsClient implements botcontext.SecretsClient
+// awsSecretsClient implements botcontext.SecretsClient.
 type awsSecretsClient struct {
 	client *secretsmanager.Client
 }

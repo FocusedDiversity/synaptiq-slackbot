@@ -55,7 +55,7 @@ features:
   analytics_enabled: false
 `
 
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0o644); err != nil {
 		t.Fatalf("Failed to write test config: %v", err)
 	}
 
@@ -224,7 +224,7 @@ channels:
 features: {}
 `
 
-	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+	if err := os.WriteFile(configPath, []byte(configContent), 0o644); err != nil {
 		t.Fatalf("Failed to write test config: %v", err)
 	}
 
@@ -428,7 +428,7 @@ channels:
 			tmpDir := t.TempDir()
 			configPath := filepath.Join(tmpDir, "config.yaml")
 
-			if err := os.WriteFile(configPath, []byte(tt.config), 0644); err != nil {
+			if err := os.WriteFile(configPath, []byte(tt.config), 0o644); err != nil {
 				t.Fatalf("Failed to write test config: %v", err)
 			}
 

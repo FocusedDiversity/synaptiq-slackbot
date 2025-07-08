@@ -9,14 +9,14 @@ import (
 	"github.com/synaptiq/standup-bot/internal/store"
 )
 
-// Scheduler handles scheduled standup tasks
+// Scheduler handles scheduled standup tasks.
 type Scheduler struct {
 	service *Service
 	botCtx  botcontext.BotContext
 	store   store.Store
 }
 
-// NewScheduler creates a new scheduler
+// NewScheduler creates a new scheduler.
 func NewScheduler(service *Service, botCtx botcontext.BotContext, store store.Store) *Scheduler {
 	return &Scheduler{
 		service: service,
@@ -25,7 +25,7 @@ func NewScheduler(service *Service, botCtx botcontext.BotContext, store store.St
 	}
 }
 
-// ProcessScheduledTasks processes tasks that need to run at the current time
+// ProcessScheduledTasks processes tasks that need to run at the current time.
 func (s *Scheduler) ProcessScheduledTasks(ctx context.Context) error {
 	logger := s.botCtx.Logger()
 	now := time.Now()
@@ -68,7 +68,7 @@ func (s *Scheduler) ProcessScheduledTasks(ctx context.Context) error {
 	return nil
 }
 
-// isActiveDay checks if today is an active day for the channel
+// isActiveDay checks if today is an active day for the channel.
 func (s *Scheduler) isActiveDay(config *store.ChannelConfig, now time.Time) bool {
 	// Convert to channel's timezone
 	loc, err := time.LoadLocation(config.Schedule.Timezone)
@@ -96,7 +96,7 @@ func (s *Scheduler) isActiveDay(config *store.ChannelConfig, now time.Time) bool
 	return false
 }
 
-// getChannelTime converts current time to channel's timezone
+// getChannelTime converts current time to channel's timezone.
 func (s *Scheduler) getChannelTime(config *store.ChannelConfig, now time.Time) time.Time {
 	loc, err := time.LoadLocation(config.Schedule.Timezone)
 	if err != nil {
@@ -106,7 +106,7 @@ func (s *Scheduler) getChannelTime(config *store.ChannelConfig, now time.Time) t
 	return now.In(loc)
 }
 
-// processReminders checks and sends reminders if it's time
+// processReminders checks and sends reminders if it's time.
 func (s *Scheduler) processReminders(ctx context.Context, config *store.ChannelConfig, channelTime time.Time) error {
 	currentTimeStr := channelTime.Format("15:04")
 
@@ -139,7 +139,7 @@ func (s *Scheduler) processReminders(ctx context.Context, config *store.ChannelC
 	return nil
 }
 
-// processDailySummary checks and posts summary if it's time
+// processDailySummary checks and posts summary if it's time.
 func (s *Scheduler) processDailySummary(ctx context.Context, config *store.ChannelConfig, channelTime time.Time) error {
 	currentTimeStr := channelTime.Format("15:04")
 
@@ -162,8 +162,7 @@ func (s *Scheduler) processDailySummary(ctx context.Context, config *store.Chann
 	return nil
 }
 
-// isTimeMatch checks if current time matches the scheduled time
-// This allows for a 1-minute window to handle timing variations
+// This allows for a 1-minute window to handle timing variations.
 func (s *Scheduler) isTimeMatch(currentTime, scheduledTime string) bool {
 	// Parse times
 	current, err1 := time.Parse("15:04", currentTime)
@@ -178,8 +177,7 @@ func (s *Scheduler) isTimeMatch(currentTime, scheduledTime string) bool {
 	return diff >= 0 && diff < 1
 }
 
-// StartDailyStandups starts standup sessions for all active channels
-// This can be called at the beginning of each day
+// This can be called at the beginning of each day.
 func (s *Scheduler) StartDailyStandups(ctx context.Context) error {
 	logger := s.botCtx.Logger()
 

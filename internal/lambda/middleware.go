@@ -9,16 +9,17 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/google/uuid"
+
 	botcontext "github.com/synaptiq/standup-bot/context"
 )
 
-// Handler is a function that processes Lambda requests
+// Handler is a function that processes Lambda requests.
 type Handler func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
 
-// Middleware is a function that wraps a handler
+// Middleware is a function that wraps a handler.
 type Middleware func(Handler) Handler
 
-// Chain chains multiple middleware together
+// Chain chains multiple middleware together.
 func Chain(middlewares ...Middleware) Middleware {
 	return func(next Handler) Handler {
 		for i := len(middlewares) - 1; i >= 0; i-- {
@@ -28,7 +29,7 @@ func Chain(middlewares ...Middleware) Middleware {
 	}
 }
 
-// WithRequestID adds a request ID to the context
+// WithRequestID adds a request ID to the context.
 func WithRequestID(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
 		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -51,7 +52,7 @@ func WithRequestID(botCtx botcontext.BotContext) Middleware {
 	}
 }
 
-// WithLogging adds structured logging to requests
+// WithLogging adds structured logging to requests.
 func WithLogging(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
 		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -86,7 +87,7 @@ func WithLogging(botCtx botcontext.BotContext) Middleware {
 	}
 }
 
-// WithTracing adds distributed tracing
+// WithTracing adds distributed tracing.
 func WithTracing(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
 		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -102,7 +103,7 @@ func WithTracing(botCtx botcontext.BotContext) Middleware {
 	}
 }
 
-// WithRecovery recovers from panics and returns 500
+// WithRecovery recovers from panics and returns 500.
 func WithRecovery(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
 		return func(ctx context.Context, request events.APIGatewayProxyRequest) (response events.APIGatewayProxyResponse, err error) {
@@ -121,7 +122,7 @@ func WithRecovery(botCtx botcontext.BotContext) Middleware {
 	}
 }
 
-// WithCORS adds CORS headers
+// WithCORS adds CORS headers.
 func WithCORS(allowedOrigins []string) Middleware {
 	return func(next Handler) Handler {
 		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -153,7 +154,7 @@ func WithCORS(allowedOrigins []string) Middleware {
 	}
 }
 
-// ParseBody parses the request body into the given interface
+// ParseBody parses the request body into the given interface.
 func ParseBody(request events.APIGatewayProxyRequest, v interface{}) error {
 	if request.Body == "" {
 		return fmt.Errorf("empty request body")
@@ -166,7 +167,7 @@ func ParseBody(request events.APIGatewayProxyRequest, v interface{}) error {
 	return nil
 }
 
-// ExtractUserID extracts user ID from various sources
+// ExtractUserID extracts user ID from various sources.
 func ExtractUserID(request events.APIGatewayProxyRequest) string {
 	// Check path parameters
 	if userID, ok := request.PathParameters["userId"]; ok {
@@ -186,7 +187,7 @@ func ExtractUserID(request events.APIGatewayProxyRequest) string {
 	return ""
 }
 
-// StandardMiddleware returns the standard middleware chain
+// StandardMiddleware returns the standard middleware chain.
 func StandardMiddleware(botCtx botcontext.BotContext) Middleware {
 	return Chain(
 		WithRecovery(botCtx),

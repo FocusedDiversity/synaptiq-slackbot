@@ -9,19 +9,19 @@ import (
 	"time"
 )
 
-// RequestVerifier verifies Slack request signatures
+// RequestVerifier verifies Slack request signatures.
 type RequestVerifier struct {
 	signingSecret string
 }
 
-// NewRequestVerifier creates a new request verifier
+// NewRequestVerifier creates a new request verifier.
 func NewRequestVerifier(signingSecret string) *RequestVerifier {
 	return &RequestVerifier{
 		signingSecret: signingSecret,
 	}
 }
 
-// VerifyRequest verifies a Slack request signature
+// VerifyRequest verifies a Slack request signature.
 func (v *RequestVerifier) VerifyRequest(timestamp, signature, body string) error {
 	// Check timestamp to prevent replay attacks
 	ts, err := strconv.ParseInt(timestamp, 10, 64)

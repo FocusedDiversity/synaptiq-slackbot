@@ -179,6 +179,34 @@ The project uses:
 - Pre-commit hooks for automated checks
 - GitHub Actions for CI/CD
 
+### Running CI Checks Locally
+
+The project includes scripts to run the same CI checks that run in GitHub Actions:
+
+```bash
+# Run full CI suite (all checks)
+./scripts/ci-local.sh
+
+# Run critical checks only (faster)
+./scripts/ci-summary.sh
+
+# Auto-fix common lint issues
+./scripts/fix-lint.sh
+
+# Install git hooks
+./scripts/setup-hooks.sh
+```
+
+The git hooks will:
+- **pre-commit**: Run quick checks (build, format, security)
+- **pre-push**: Run full CI suite including linting
+
+To skip hooks temporarily:
+```bash
+git commit --no-verify
+SKIP_CI_CHECKS=1 git push
+```
+
 ## 🚀 Deployment
 
 ### Deploy to AWS

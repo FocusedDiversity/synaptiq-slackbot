@@ -14,7 +14,16 @@
       "Bash(true)",
       "Bash(pre-commit run markdownlint:*)",
       "Bash(go build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(./scripts/ci-local.sh:*)",
+      "Bash(make:*)",
+      "Bash(go install:*)",
+      "Bash(brew install:*)",
+      "Bash(gofumpt:*)",
+      "Bash(goimports:*)",
+      "Bash(./scripts/fix-lint.sh:*)",
+      "Bash(./scripts/ci-summary.sh:*)",
+      "Bash(./scripts/setup-hooks.sh:*)"
     ],
     "deny": []
   }

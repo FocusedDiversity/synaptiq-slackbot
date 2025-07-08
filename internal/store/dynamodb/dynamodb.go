@@ -11,17 +11,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
 	"github.com/synaptiq/standup-bot/internal/store"
 )
 
-// DynamoDBStore implements the Store interface using DynamoDB
+// DynamoDBStore implements the Store interface using DynamoDB.
 type DynamoDBStore struct {
 	client    *dynamodb.Client
 	tableName string
 	ttlDays   int // TTL for old records in days
 }
 
-// NewDynamoDBStore creates a new DynamoDB store
+// NewDynamoDBStore creates a new DynamoDB store.
 func NewDynamoDBStore(client *dynamodb.Client, tableName string, ttlDays int) store.Store {
 	return &DynamoDBStore{
 		client:    client,
@@ -30,7 +31,7 @@ func NewDynamoDBStore(client *dynamodb.Client, tableName string, ttlDays int) st
 	}
 }
 
-// Helper functions for key generation
+// Helper functions for key generation.
 func workspaceKey(teamID string) (string, string) {
 	return fmt.Sprintf("WORKSPACE#%s", teamID), fmt.Sprintf("WORKSPACE#%s", teamID)
 }
@@ -51,7 +52,7 @@ func reminderKey(channelID, date, userID, time string) (string, string) {
 	return fmt.Sprintf("REMINDER#%s#%s", channelID, date), fmt.Sprintf("USER#%s#%s", userID, time)
 }
 
-// calculateTTL calculates TTL timestamp for records
+// calculateTTL calculates TTL timestamp for records.
 func (s *DynamoDBStore) calculateTTL(baseTime time.Time) *int64 {
 	if s.ttlDays <= 0 {
 		return nil
@@ -60,7 +61,7 @@ func (s *DynamoDBStore) calculateTTL(baseTime time.Time) *int64 {
 	return &ttl
 }
 
-// SaveWorkspaceConfig saves workspace configuration
+// SaveWorkspaceConfig saves workspace configuration.
 func (s *DynamoDBStore) SaveWorkspaceConfig(ctx context.Context, config *store.WorkspaceConfig) error {
 	pk, sk := workspaceKey(config.TeamID)
 
@@ -91,7 +92,7 @@ func (s *DynamoDBStore) SaveWorkspaceConfig(ctx context.Context, config *store.W
 	return nil
 }
 
-// GetWorkspaceConfig retrieves workspace configuration
+// GetWorkspaceConfig retrieves workspace configuration.
 func (s *DynamoDBStore) GetWorkspaceConfig(ctx context.Context, teamID string) (*store.WorkspaceConfig, error) {
 	pk, sk := workspaceKey(teamID)
 
@@ -118,7 +119,7 @@ func (s *DynamoDBStore) GetWorkspaceConfig(ctx context.Context, teamID string) (
 	return &config, nil
 }
 
-// SaveChannelConfig saves channel configuration
+// SaveChannelConfig saves channel configuration.
 func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.ChannelConfig) error {
 	pk, sk := channelConfigKey(config.TeamID, config.ChannelID)
 
@@ -135,8 +136,8 @@ func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.Cha
 		"questions":    config.Questions,
 		"updated_at":   time.Now(),
 		// GSI1 for querying active channels
-		"GSI1PK":       fmt.Sprintf("ACTIVE#%t", config.Enabled),
-		"GSI1SK":       fmt.Sprintf("CHANNEL#%s#%s", config.TeamID, config.ChannelID),
+		"GSI1PK": fmt.Sprintf("ACTIVE#%t", config.Enabled),
+		"GSI1SK": fmt.Sprintf("CHANNEL#%s#%s", config.TeamID, config.ChannelID),
 	}
 
 	av, err := attributevalue.MarshalMap(item)
@@ -155,7 +156,7 @@ func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.Cha
 	return nil
 }
 
-// GetChannelConfig retrieves channel configuration
+// GetChannelConfig retrieves channel configuration.
 func (s *DynamoDBStore) GetChannelConfig(ctx context.Context, teamID, channelID string) (*store.ChannelConfig, error) {
 	pk, sk := channelConfigKey(teamID, channelID)
 
@@ -182,7 +183,7 @@ func (s *DynamoDBStore) GetChannelConfig(ctx context.Context, teamID, channelID 
 	return &config, nil
 }
 
-// ListChannelConfigs lists all channel configurations for a workspace
+// ListChannelConfigs lists all channel configurations for a workspace.
 func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) ([]*store.ChannelConfig, error) {
 	pk := fmt.Sprintf("WORKSPACE#%s", teamID)
 
@@ -221,7 +222,7 @@ func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) (
 	return configs, nil
 }
 
-// ListActiveChannelConfigs lists all active channel configurations across all workspaces
+// ListActiveChannelConfigs lists all active channel configurations across all workspaces.
 func (s *DynamoDBStore) ListActiveChannelConfigs(ctx context.Context) ([]*store.ChannelConfig, error) {
 	keyCond := expression.Key("GSI1PK").Equal(expression.Value("ACTIVE#true"))
 
@@ -257,7 +258,7 @@ func (s *DynamoDBStore) ListActiveChannelConfigs(ctx context.Context) ([]*store.
 	return configs, nil
 }
 
-// CreateSession creates a new standup session
+// CreateSession creates a new standup session.
 func (s *DynamoDBStore) CreateSession(ctx context.Context, session *store.Session) error {
 	pk, sk := sessionKey(session.ChannelID, session.Date)
 
@@ -295,7 +296,7 @@ func (s *DynamoDBStore) CreateSession(ctx context.Context, session *store.Sessio
 	return nil
 }
 
-// GetSession retrieves a standup session
+// GetSession retrieves a standup session.
 func (s *DynamoDBStore) GetSession(ctx context.Context, channelID, date string) (*store.Session, error) {
 	pk, sk := sessionKey(channelID, date)
 
@@ -322,7 +323,7 @@ func (s *DynamoDBStore) GetSession(ctx context.Context, channelID, date string) 
 	return &session, nil
 }
 
-// UpdateSessionStatus updates the status of a session
+// UpdateSessionStatus updates the status of a session.
 func (s *DynamoDBStore) UpdateSessionStatus(ctx context.Context, channelID, date string, status store.SessionStatus) error {
 	pk, sk := sessionKey(channelID, date)
 
@@ -353,7 +354,7 @@ func (s *DynamoDBStore) UpdateSessionStatus(ctx context.Context, channelID, date
 	return nil
 }
 
-// MarkSummaryPosted marks a session summary as posted
+// MarkSummaryPosted marks a session summary as posted.
 func (s *DynamoDBStore) MarkSummaryPosted(ctx context.Context, channelID, date string) error {
 	pk, sk := sessionKey(channelID, date)
 
@@ -380,7 +381,7 @@ func (s *DynamoDBStore) MarkSummaryPosted(ctx context.Context, channelID, date s
 	return nil
 }
 
-// SaveUserResponse saves a user's standup response
+// SaveUserResponse saves a user's standup response.
 func (s *DynamoDBStore) SaveUserResponse(ctx context.Context, response *store.UserResponse) error {
 	pk, sk := userResponseKey(response.ChannelID, response.Date, response.UserID)
 
@@ -414,7 +415,7 @@ func (s *DynamoDBStore) SaveUserResponse(ctx context.Context, response *store.Us
 	return nil
 }
 
-// GetUserResponse retrieves a user's standup response
+// GetUserResponse retrieves a user's standup response.
 func (s *DynamoDBStore) GetUserResponse(ctx context.Context, channelID, date, userID string) (*store.UserResponse, error) {
 	pk, sk := userResponseKey(channelID, date, userID)
 
@@ -441,7 +442,7 @@ func (s *DynamoDBStore) GetUserResponse(ctx context.Context, channelID, date, us
 	return &response, nil
 }
 
-// ListUserResponses lists all user responses for a session
+// ListUserResponses lists all user responses for a session.
 func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date string) ([]*store.UserResponse, error) {
 	pk := fmt.Sprintf("SESSION#%s#%s", channelID, date)
 
@@ -480,7 +481,7 @@ func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date s
 	return responses, nil
 }
 
-// IncrementReminderCount increments the reminder count for a user
+// IncrementReminderCount increments the reminder count for a user.
 func (s *DynamoDBStore) IncrementReminderCount(ctx context.Context, channelID, date, userID string) error {
 	pk, sk := userResponseKey(channelID, date, userID)
 
@@ -507,7 +508,7 @@ func (s *DynamoDBStore) IncrementReminderCount(ctx context.Context, channelID, d
 	return nil
 }
 
-// SaveReminder saves a reminder record
+// SaveReminder saves a reminder record.
 func (s *DynamoDBStore) SaveReminder(ctx context.Context, reminder *store.Reminder) error {
 	pk, sk := reminderKey(reminder.ChannelID, reminder.Date, reminder.UserID, reminder.Time)
 
@@ -539,7 +540,7 @@ func (s *DynamoDBStore) SaveReminder(ctx context.Context, reminder *store.Remind
 	return nil
 }
 
-// ListReminders lists all reminders for a channel and date
+// ListReminders lists all reminders for a channel and date.
 func (s *DynamoDBStore) ListReminders(ctx context.Context, channelID, date string) ([]*store.Reminder, error) {
 	pk := fmt.Sprintf("REMINDER#%s#%s", channelID, date)
 
@@ -576,7 +577,7 @@ func (s *DynamoDBStore) ListReminders(ctx context.Context, channelID, date strin
 	return reminders, nil
 }
 
-// GetPendingSessions gets all sessions that need processing
+// GetPendingSessions gets all sessions that need processing.
 func (s *DynamoDBStore) GetPendingSessions(ctx context.Context, currentTime time.Time) ([]*store.Session, error) {
 	// This would need a GSI on status to be efficient
 	// For now, we'll need to scan or implement differently
@@ -584,7 +585,7 @@ func (s *DynamoDBStore) GetPendingSessions(ctx context.Context, currentTime time
 	return nil, &store.StoreError{Code: "NOT_IMPLEMENTED", Message: "GetPendingSessions not implemented"}
 }
 
-// GetUsersWithoutResponse gets users who haven't submitted responses
+// GetUsersWithoutResponse gets users who haven't submitted responses.
 func (s *DynamoDBStore) GetUsersWithoutResponse(ctx context.Context, channelID, date string, userIDs []string) ([]string, error) {
 	// Get all responses for the session
 	responses, err := s.ListUserResponses(ctx, channelID, date)

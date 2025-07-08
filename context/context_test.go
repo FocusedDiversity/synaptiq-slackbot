@@ -13,15 +13,15 @@ type mockConfig struct {
 	version string
 }
 
-func (m *mockConfig) Version() string                               { return m.version }
-func (m *mockConfig) BotToken() string                              { return "xoxb-test" }
-func (m *mockConfig) AppToken() string                              { return "xapp-test" }
-func (m *mockConfig) DatabaseTable() string                         { return "test-table" }
-func (m *mockConfig) DatabaseRegion() string                        { return "us-east-1" }
-func (m *mockConfig) Channels() []config.ChannelConfig              { return nil }
+func (m *mockConfig) Version() string                                    { return m.version }
+func (m *mockConfig) BotToken() string                                   { return "xoxb-test" }
+func (m *mockConfig) AppToken() string                                   { return "xapp-test" }
+func (m *mockConfig) DatabaseTable() string                              { return "test-table" }
+func (m *mockConfig) DatabaseRegion() string                             { return "us-east-1" }
+func (m *mockConfig) Channels() []config.ChannelConfig                   { return nil }
 func (m *mockConfig) ChannelByID(id string) (config.ChannelConfig, bool) { return nil, false }
-func (m *mockConfig) IsFeatureEnabled(feature string) bool          { return false }
-func (m *mockConfig) Reload() error                                 { return nil }
+func (m *mockConfig) IsFeatureEnabled(feature string) bool               { return false }
+func (m *mockConfig) Reload() error                                      { return nil }
 
 type mockConfigProvider struct {
 	loadFunc func() (config.Config, error)
@@ -44,6 +44,7 @@ func (m *mockDynamoDBClient) PutItem(ctx context.Context, item interface{}) erro
 func (m *mockDynamoDBClient) GetItem(ctx context.Context, key interface{}, item interface{}) error {
 	return nil
 }
+
 func (m *mockDynamoDBClient) Query(ctx context.Context, params interface{}) ([]interface{}, error) {
 	return nil, nil
 }
@@ -59,9 +60,11 @@ type mockSlackClient struct{}
 func (m *mockSlackClient) PostMessage(ctx context.Context, channelID string, message string) error {
 	return nil
 }
+
 func (m *mockSlackClient) SendDM(ctx context.Context, userID string, message string) error {
 	return nil
 }
+
 func (m *mockSlackClient) OpenModal(ctx context.Context, triggerID string, view interface{}) error {
 	return nil
 }
@@ -84,12 +87,15 @@ type mockLogger struct {
 func (m *mockLogger) Debug(ctx context.Context, msg string, fields ...Field) {
 	m.logs = append(m.logs, "DEBUG: "+msg)
 }
+
 func (m *mockLogger) Info(ctx context.Context, msg string, fields ...Field) {
 	m.logs = append(m.logs, "INFO: "+msg)
 }
+
 func (m *mockLogger) Warn(ctx context.Context, msg string, fields ...Field) {
 	m.logs = append(m.logs, "WARN: "+msg)
 }
+
 func (m *mockLogger) Error(ctx context.Context, msg string, err error, fields ...Field) {
 	m.logs = append(m.logs, "ERROR: "+msg)
 }
