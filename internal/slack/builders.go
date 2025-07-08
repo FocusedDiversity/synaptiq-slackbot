@@ -230,28 +230,29 @@ func BuildSummaryMessage(date, headerTemplate string, responses []*UserResponseS
 		AddHeader(header)
 
 	// Add submitted users
-	if len(responses) > 0 {
-		var submitted []string
-		var missing []string
-
-		for _, resp := range responses {
-			if resp.Submitted {
-				submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", resp.UserID, resp.Time))
-			} else {
-				missing = append(missing, fmt.Sprintf("• <@%s>", resp.UserID))
-			}
-		}
-
-		if len(submitted) > 0 {
-			builder.AddSection("✅ *Submitted:*\n" + strings.Join(submitted, "\n"))
-		}
-
-		if len(missing) > 0 {
-			builder.AddDivider()
-			builder.AddSection("⏳ *Pending:*\n" + strings.Join(missing, "\n"))
-		}
-	} else {
+	if len(responses) == 0 {
 		builder.AddSection("No responses yet today.")
+		return builder.Build()
+	}
+
+	var submitted []string
+	var missing []string
+
+	for _, resp := range responses {
+		if resp.Submitted {
+			submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", resp.UserID, resp.Time))
+		} else {
+			missing = append(missing, fmt.Sprintf("• <@%s>", resp.UserID))
+		}
+	}
+
+	if len(submitted) > 0 {
+		builder.AddSection("✅ *Submitted:*\n" + strings.Join(submitted, "\n"))
+	}
+
+	if len(missing) > 0 {
+		builder.AddDivider()
+		builder.AddSection("⏳ *Pending:*\n" + strings.Join(missing, "\n"))
 	}
 
 	return builder.Build()

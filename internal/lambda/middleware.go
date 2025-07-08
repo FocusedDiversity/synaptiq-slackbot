@@ -170,6 +170,8 @@ func WithCORS(allowedOrigins []string) Middleware {
 }
 
 // ParseBody parses the request body into the given interface.
+//
+//nolint:gocritic // hugeParam: consistent with handler signatures
 func ParseBody(request events.APIGatewayProxyRequest, v interface{}) error {
 	if request.Body == "" {
 		return fmt.Errorf("empty request body")

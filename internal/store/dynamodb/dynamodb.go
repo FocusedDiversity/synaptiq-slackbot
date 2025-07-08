@@ -32,23 +32,23 @@ func NewStore(client *dynamodb.Client, tableName string, ttlDays int) store.Stor
 }
 
 // Helper functions for key generation.
-func workspaceKey(teamID string) (string, string) {
+func workspaceKey(teamID string) (pk, sk string) {
 	return fmt.Sprintf("WORKSPACE#%s", teamID), fmt.Sprintf("WORKSPACE#%s", teamID)
 }
 
-func channelConfigKey(teamID, channelID string) (string, string) {
+func channelConfigKey(teamID, channelID string) (pk, sk string) {
 	return fmt.Sprintf("WORKSPACE#%s", teamID), fmt.Sprintf("CONFIG#%s", channelID)
 }
 
-func sessionKey(channelID, date string) (string, string) {
+func sessionKey(channelID, date string) (pk, sk string) {
 	return fmt.Sprintf("SESSION#%s#%s", channelID, date), fmt.Sprintf("SESSION#%s#%s", channelID, date)
 }
 
-func userResponseKey(channelID, date, userID string) (string, string) {
+func userResponseKey(channelID, date, userID string) (pk, sk string) {
 	return fmt.Sprintf("SESSION#%s#%s", channelID, date), fmt.Sprintf("USER#%s", userID)
 }
 
-func reminderKey(channelID, date, userID, time string) (string, string) {
+func reminderKey(channelID, date, userID, time string) (pk, sk string) {
 	return fmt.Sprintf("REMINDER#%s#%s", channelID, date), fmt.Sprintf("USER#%s#%s", userID, time)
 }
 

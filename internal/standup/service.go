@@ -133,7 +133,7 @@ func (s *Service) SubmitStandupResponse(ctx context.Context, submission *Submiss
 }
 
 // SendReminders sends reminders to users who haven't submitted.
-func (s *Service) SendReminders(ctx context.Context, channelID string, reminderTime string) error {
+func (s *Service) SendReminders(ctx context.Context, channelID, reminderTime string) error {
 	logger := s.botCtx.Logger()
 	today := time.Now().Format("2006-01-02")
 
@@ -180,15 +180,15 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 
 	// Get session
 	session, err := s.store.GetSession(ctx, channelID, today)
-	if err != nil {
-		if err == store.ErrNotFound {
-			// No session today - create one
-			session, err = s.StartStandupSession(ctx, channelID)
-			if err != nil {
-				return fmt.Errorf("failed to create session: %w", err)
-			}
-		} else {
-			return fmt.Errorf("failed to get session: %w", err)
+	if err != nil && err != store.ErrNotFound {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	if err == store.ErrNotFound {
+		// No session today - create one
+		session, err = s.StartStandupSession(ctx, channelID)
+		if err != nil {
+			return fmt.Errorf("failed to create session: %w", err)
 		}
 	}
 

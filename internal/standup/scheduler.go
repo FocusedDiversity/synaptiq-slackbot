@@ -111,27 +111,29 @@ func (s *Scheduler) processReminders(ctx context.Context, config *store.ChannelC
 	currentTimeStr := channelTime.Format("15:04")
 
 	for _, reminderTime := range config.Schedule.ReminderTimes {
-		if s.isTimeMatch(currentTimeStr, reminderTime) {
-			// Check if we've already sent reminders for this time today
-			today := channelTime.Format("2006-01-02")
-			reminders, err := s.store.ListReminders(ctx, config.ChannelID, today)
-			if err != nil {
-				return fmt.Errorf("failed to list reminders: %w", err)
-			}
+		if !s.isTimeMatch(currentTimeStr, reminderTime) {
+			continue
+		}
 
-			// Check if we've already sent reminders for this time
-			alreadySent := false
-			for _, reminder := range reminders {
-				if reminder.Time == reminderTime {
-					alreadySent = true
-					break
-				}
-			}
+		// Check if we've already sent reminders for this time today
+		today := channelTime.Format("2006-01-02")
+		reminders, err := s.store.ListReminders(ctx, config.ChannelID, today)
+		if err != nil {
+			return fmt.Errorf("failed to list reminders: %w", err)
+		}
 
-			if !alreadySent {
-				if err := s.service.SendReminders(ctx, config.ChannelID, reminderTime); err != nil {
-					return fmt.Errorf("failed to send reminders: %w", err)
-				}
+		// Check if we've already sent reminders for this time
+		alreadySent := false
+		for _, reminder := range reminders {
+			if reminder.Time == reminderTime {
+				alreadySent = true
+				break
+			}
+		}
+
+		if !alreadySent {
+			if err := s.service.SendReminders(ctx, config.ChannelID, reminderTime); err != nil {
+				return fmt.Errorf("failed to send reminders: %w", err)
 			}
 		}
 	}
@@ -143,19 +145,21 @@ func (s *Scheduler) processReminders(ctx context.Context, config *store.ChannelC
 func (s *Scheduler) processDailySummary(ctx context.Context, config *store.ChannelConfig, channelTime time.Time) error {
 	currentTimeStr := channelTime.Format("15:04")
 
-	if s.isTimeMatch(currentTimeStr, config.Schedule.SummaryTime) {
-		// Check if summary already posted today
-		today := channelTime.Format("2006-01-02")
-		session, err := s.store.GetSession(ctx, config.ChannelID, today)
-		if err != nil && err != store.ErrNotFound {
-			return fmt.Errorf("failed to get session: %w", err)
-		}
+	if !s.isTimeMatch(currentTimeStr, config.Schedule.SummaryTime) {
+		return nil
+	}
 
-		// Post summary if not already posted
-		if session == nil || !session.SummaryPosted {
-			if err := s.service.PostDailySummary(ctx, config.ChannelID); err != nil {
-				return fmt.Errorf("failed to post summary: %w", err)
-			}
+	// Check if summary already posted today
+	today := channelTime.Format("2006-01-02")
+	session, err := s.store.GetSession(ctx, config.ChannelID, today)
+	if err != nil && err != store.ErrNotFound {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	// Post summary if not already posted
+	if session == nil || !session.SummaryPosted {
+		if err := s.service.PostDailySummary(ctx, config.ChannelID); err != nil {
+			return fmt.Errorf("failed to post summary: %w", err)
 		}
 	}
 

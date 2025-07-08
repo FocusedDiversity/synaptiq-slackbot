@@ -106,7 +106,7 @@ func (c *dynamoDBClient) PutItem(ctx context.Context, item interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (c *dynamoDBClient) GetItem(ctx context.Context, key interface{}, item interface{}) error {
+func (c *dynamoDBClient) GetItem(ctx context.Context, key, item interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -119,12 +119,12 @@ type slackClientWrapper struct {
 	client slack.Client
 }
 
-func (w *slackClientWrapper) PostMessage(ctx context.Context, channelID string, message string) error {
+func (w *slackClientWrapper) PostMessage(ctx context.Context, channelID, message string) error {
 	_, err := w.client.PostMessage(ctx, channelID, slack.WithText(message))
 	return err
 }
 
-func (w *slackClientWrapper) SendDM(ctx context.Context, userID string, message string) error {
+func (w *slackClientWrapper) SendDM(ctx context.Context, userID, message string) error {
 	dmChannel, err := w.client.OpenDM(ctx, userID)
 	if err != nil {
 		return err

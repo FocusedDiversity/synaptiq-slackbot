@@ -220,7 +220,9 @@ func processBulkReminder(ctx context.Context, task TaskMessage) error {
 }
 
 // SendAsyncTask sends a task to the processor queue.
-func SendAsyncTask(ctx context.Context, taskType string, channelID string, userID string, payload map[string]interface{}) error {
+//
+//nolint:unparam // ctx will be used when SQS implementation is added
+func SendAsyncTask(ctx context.Context, taskType, channelID, userID string, payload map[string]interface{}) error {
 	task := TaskMessage{
 		Type:      taskType,
 		ChannelID: channelID,
