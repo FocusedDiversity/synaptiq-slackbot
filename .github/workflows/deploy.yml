@@ -1,0 +1,233 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  AWS_REGION: us-east-1
+  GO_VERSION: '1.21'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-session-name: GitHubActions-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build application
+        run: sam build --use-container
+
+      - name: Deploy to AWS
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          STACK_NAME="standup-bot-${ENVIRONMENT}"
+
+          sam deploy \
+            --stack-name ${STACK_NAME} \
+            --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET }} \
+            --s3-prefix ${ENVIRONMENT} \
+            --parameter-overrides \
+              Environment=${ENVIRONMENT} \
+              SlackBotToken=${{ secrets.SLACK_BOT_TOKEN }} \
+              SlackSigningSecret=${{ secrets.SLACK_SIGNING_SECRET }} \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --tags \
+              Environment=${ENVIRONMENT} \
+              ManagedBy=GitHubActions \
+              Repository=${{ github.repository }}
+
+      - name: Get deployment outputs
+        id: stack-outputs
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          STACK_NAME="standup-bot-${ENVIRONMENT}"
+
+          WEBHOOK_URL=$(aws cloudformation describe-stacks \
+            --stack-name ${STACK_NAME} \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebhookUrl`].OutputValue' \
+            --output text)
+
+          echo "webhook_url=${WEBHOOK_URL}" >> $GITHUB_OUTPUT
+          echo "stack_name=${STACK_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Run smoke tests
+        env:
+          ENDPOINT: ${{ steps.stack-outputs.outputs.webhook_url }}
+          STACK_NAME: ${{ steps.stack-outputs.outputs.stack_name }}
+          TABLE_NAME: standup-bot
+        run: |
+          chmod +x ./scripts/smoke-test.sh
+          ./scripts/smoke-test.sh "$ENDPOINT"
+
+      - name: Update Slack app manifest
+        if: github.event.inputs.environment == 'production' || (github.event.inputs.environment != 'staging' && github.ref == 'refs/heads/main')
+        run: |
+          echo "Would update Slack app manifest with webhook URL: ${{ steps.stack-outputs.outputs.webhook_url }}"
+          # Add actual Slack API call here when ready
+
+      - name: Notify deployment success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ Deployment successful!
+            Environment: ${{ github.event.inputs.environment || 'staging' }}
+            Webhook URL: ${{ steps.stack-outputs.outputs.webhook_url }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify deployment failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ Deployment failed!
+            Environment: ${{ github.event.inputs.environment || 'staging' }}
+            Check the logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  post-deploy-tests:
+    name: Post-deployment Tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-session-name: GitHubActions-PostDeploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run E2E tests
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          STACK_NAME="standup-bot-${ENVIRONMENT}"
+
+          # Get endpoint URL
+          ENDPOINT=$(aws cloudformation describe-stacks \
+            --stack-name ${STACK_NAME} \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebhookUrl`].OutputValue' \
+            --output text)
+
+          # Run E2E tests against deployed endpoint
+          echo "Running E2E tests against: ${ENDPOINT}"
+          # Add actual E2E test commands here
+
+      - name: Check CloudWatch alarms
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+
+          # Check if any alarms are in ALARM state
+          ALARMS=$(aws cloudwatch describe-alarms \
+            --alarm-name-prefix "standup-bot-${ENVIRONMENT}" \
+            --state-value ALARM \
+            --query 'MetricAlarms[*].AlarmName' \
+            --output text)
+
+          if [ -n "$ALARMS" ]; then
+            echo "⚠️ CloudWatch alarms in ALARM state: $ALARMS"
+            exit 1
+          else
+            echo "✅ All CloudWatch alarms are OK"
+          fi
+
+  rollback:
+    name: Rollback if needed
+    needs: [deploy, post-deploy-tests]
+    runs-on: ubuntu-latest
+    if: failure()
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-session-name: GitHubActions-Rollback-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback deployment
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || 'staging' }}"
+          STACK_NAME="standup-bot-${ENVIRONMENT}"
+
+          echo "🔄 Rolling back deployment for ${STACK_NAME}..."
+
+          # First try to cancel any in-progress update
+          aws cloudformation cancel-update-stack --stack-name ${STACK_NAME} || true
+
+          # Wait a moment for cancellation
+          sleep 10
+
+          # Then attempt rollback to previous version
+          aws cloudformation update-stack \
+            --stack-name ${STACK_NAME} \
+            --use-previous-template \
+            --capabilities CAPABILITY_IAM || echo "Rollback may not be needed"
+
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "🔄 Deployment rolled back",
+              attachments: [{
+                color: "warning",
+                fields: [
+                  { title: "Environment", value: "${{ github.event.inputs.environment || 'staging' }}", short: true },
+                  { title: "Run", value: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", short: true }
+                ]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

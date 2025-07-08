@@ -1,0 +1,159 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: webhook
+    main: ./cmd/webhook/main.go
+    binary: webhook
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
+
+  - id: scheduler
+    main: ./cmd/scheduler/main.go
+    binary: scheduler
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
+
+  - id: processor
+    main: ./cmd/processor/main.go
+    binary: processor
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.builtBy=goreleaser
+
+archives:
+  - id: lambda-functions
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+      - template.yaml
+      - samconfig.toml
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: 'Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Performance improvements'
+      regexp: "^.*perf[(\\w)]*:+.*$"
+      order: 2
+    - title: 'Refactors'
+      regexp: "^.*refactor[(\\w)]*:+.*$"
+      order: 3
+    - title: 'Build process updates'
+      regexp: "^.*build[(\\w)]*:+.*$"
+      order: 4
+    - title: 'Other work'
+      order: 999
+
+release:
+  github:
+    owner: your-org
+    name: standup-bot
+  draft: false
+  prerelease: auto
+  mode: append
+  header: |
+    ## Slack Stand-up Bot {{ .Tag }} ({{ .Date }})
+
+    Welcome to this new release!
+  footer: |
+    ## Docker images
+
+    The Lambda functions are also available as Docker images:
+
+    ```bash
+    docker pull ghcr.io/your-org/standup-bot-webhook:{{ .Tag }}
+    docker pull ghcr.io/your-org/standup-bot-scheduler:{{ .Tag }}
+    docker pull ghcr.io/your-org/standup-bot-processor:{{ .Tag }}
+    ```
+
+    ## Thanks!
+
+    Thanks to all contributors!
+
+# Signs the checksum file
+# All artifacts are included in the checksum file
+signs:
+  - cmd: cosign
+    cert: none
+    args:
+      - "sign-blob"
+      - "--key=cosign.key"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true
+
+# Creates SBOMs of all archives and the source tarball using syft
+sboms:
+  - artifacts: archive
+  - id: source
+    artifacts: source
+
+# Repository to push the generated files to
+milestones:
+  - close: true
+
+# Announce releases
+announce:
+  slack:
+    enabled: true
+    message_template: '🎉 {{ .ProjectName }} {{ .Tag }} is out! Check it out: {{ .ReleaseURL }}'
+    channel: '#releases'
+    username: 'GoReleaser'
+    icon_emoji: ':rocket:'

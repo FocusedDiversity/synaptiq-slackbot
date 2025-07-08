@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    container_name: standup-bot-dynamodb
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -inMemory -sharedDb"
+    volumes:
+      - dynamodb-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000 || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  dynamodb-admin:
+    image: aaronshaf/dynamodb-admin:latest
+    container_name: standup-bot-dynamodb-admin
+    ports:
+      - "8001:8001"
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb-local:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local  # pragma: allowlist secret
+      AWS_SECRET_ACCESS_KEY: local  # pragma: allowlist secret
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: standup-bot-localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      - SERVICES=lambda,apigateway,cloudformation,sts,iam,logs,events
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_ACCESS_KEY_ID=test  # pragma: allowlist secret
+      - AWS_SECRET_ACCESS_KEY=test  # pragma: allowlist secret
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - localstack-data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: standup-bot-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Optional: SMTP server for testing email notifications
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: standup-bot-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+
+volumes:
+  dynamodb-data:
+  localstack-data:
+  redis-data:
+
+networks:
+  default:
+    name: standup-bot-network

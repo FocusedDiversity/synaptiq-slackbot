@@ -1,0 +1,139 @@
+repos:
+  # Go formatting and linting
+  - repo: local
+    hooks:
+      - id: go-fmt
+        name: go fmt
+        entry: gofumpt -w
+        language: system
+        types: [go]
+        pass_filenames: true
+
+      - id: go-imports
+        name: go imports
+        entry: goimports -w -local github.com/your-org/standup-bot
+        language: system
+        types: [go]
+        pass_filenames: true
+
+      - id: go-lint
+        name: golangci-lint
+        entry: golangci-lint run --fix
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      - id: go-mod-tidy
+        name: go mod tidy
+        entry: go mod tidy
+        language: system
+        pass_filenames: false
+        files: go.mod
+
+      - id: go-test
+        name: go test
+        entry: go test ./...
+        language: system
+        pass_filenames: false
+        types: [go]
+
+      - id: go-build
+        name: go build
+        entry: go build ./...
+        language: system
+        pass_filenames: false
+        types: [go]
+
+  # Security scanning
+  - repo: local
+    hooks:
+      - id: gosec
+        name: gosec
+        entry: gosec -fmt json -out /dev/null ./...
+        language: system
+        pass_filenames: false
+        types: [go]
+
+  # YAML files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-json
+      - id: pretty-format-json
+        args: ['--autofix', '--no-sort-keys']
+      - id: check-toml
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+
+  # Shell scripts
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+
+  # AWS CloudFormation / SAM
+  - repo: https://github.com/aws-cloudformation/cfn-python-lint
+    rev: v0.85.1
+    hooks:
+      - id: cfn-python-lint
+        files: '^template\.ya?ml$'
+
+  # Commit message
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+# Global exclude patterns
+exclude: |
+  (?x)^(
+    .aws-sam/.*|
+    vendor/.*|
+    tmp/.*|
+    .*\.pb\.go|
+    .*\.gen\.go|
+    .*_generated\.go
+  )$
+
+# Configuration for specific hooks
+default_language_version:
+  python: python3.11
+
+default_stages: [commit]
+
+fail_fast: false
+
+# Additional hook configurations
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [go-test, go-build]  # These are too slow for CI
+  submodules: false

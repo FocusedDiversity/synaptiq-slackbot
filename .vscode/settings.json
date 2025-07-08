@@ -1,0 +1,140 @@
+{
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "go.lintOnSave": "workspace",
+  "go.formatTool": "gofumpt",
+  "go.useLanguageServer": true,
+  "go.testFlags": [
+    "-v",
+    "-race",
+    "-cover"
+  ],
+  "go.testTimeout": "30s",
+  "go.coverOnSave": true,
+  "go.coverageDecorator": {
+    "type": "gutter",
+    "coveredHighlightColor": "rgba(64,128,64,0.5)",
+    "uncoveredHighlightColor": "rgba(128,64,64,0.5)",
+    "coveredGutterStyle": "blockgreen",
+    "uncoveredGutterStyle": "blockred"
+  },
+  "go.buildTags": "",
+  "go.buildFlags": [
+    "-v"
+  ],
+  "go.testEnvVars": {
+    "AWS_SAM_LOCAL": "true",
+    "AWS_REGION": "us-east-1",
+    "DYNAMODB_ENDPOINT": "http://localhost:8000"
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  },
+  "[go]": {
+    "editor.snippetSuggestions": "none",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+    "editor.rulers": [
+      120
+    ]
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": true,
+    "editor.autoIndent": "advanced"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.formatOnSave": true,
+    "editor.wordWrap": "on"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/tmp": true,
+    "**/.aws-sam": true,
+    "**/vendor": false
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/*/**": true,
+    "**/tmp/**": true,
+    "**/.aws-sam/**": true
+  },
+  "files.associations": {
+    "*.yaml": "yaml",
+    "*.yml": "yaml",
+    ".air.toml": "toml",
+    "template.yaml": "aws-cloudformation-template"
+  },
+  "terminal.integrated.env.osx": {
+    "AWS_SAM_LOCAL": "true"
+  },
+  "terminal.integrated.env.linux": {
+    "AWS_SAM_LOCAL": "true"
+  },
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/aws/serverless-application-model/main/samtranslator/validator/sam_schema/schema.json": [
+      "template.yaml",
+      "template.yml"
+    ]
+  },
+  "yaml.customTags": [
+    "!And",
+    "!Equals",
+    "!If",
+    "!Not",
+    "!Or",
+    "!Ref",
+    "!Sub",
+    "!GetAtt",
+    "!GetAZs",
+    "!ImportValue",
+    "!Select",
+    "!Split",
+    "!Join",
+    "!FindInMap",
+    "!Base64",
+    "!Cidr",
+    "!Transform",
+    "!And sequence",
+    "!Equals sequence",
+    "!If sequence",
+    "!Not sequence",
+    "!Or sequence",
+    "!Ref sequence",
+    "!Sub sequence",
+    "!GetAtt sequence",
+    "!GetAZs sequence",
+    "!ImportValue sequence",
+    "!Select sequence",
+    "!Split sequence",
+    "!Join sequence",
+    "!FindInMap sequence",
+    "!Base64 sequence",
+    "!Cidr sequence",
+    "!Transform sequence"
+  ],
+  "search.exclude": {
+    "**/vendor": true,
+    "**/.git": true,
+    "**/.aws-sam": true,
+    "**/tmp": true,
+    "**/coverage*": true
+  },
+  "task.autoDetect": "on",
+  "debug.javascript.autoAttachFilter": "disabled",
+  "extensions.ignoreRecommendations": false,
+  "git.confirmSync": false,
+  "go.coverOnTestPackage": true
+}

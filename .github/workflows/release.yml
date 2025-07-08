@@ -1,0 +1,287 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: '1.21'
+  AWS_REGION: us-east-1
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, including all commits"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
+          else
+            echo "Generating changelog from $PREVIOUS_TAG to ${{ steps.get_version.outputs.version }}"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse ${PREVIOUS_TAG}..${{ steps.get_version.outputs.version }})
+          fi
+
+          # Create changelog
+          cat > CHANGELOG.md << EOF
+          ## What's Changed
+
+          ### Commits
+          $COMMITS
+
+          ### Contributors
+          $(git log ${PREVIOUS_TAG:+${PREVIOUS_TAG}..}${{ steps.get_version.outputs.version }} --pretty=format:"- @%an" | sort -u)
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${{ steps.get_version.outputs.version }}
+          EOF
+
+          # Set multiline output
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
+
+  build-artifacts:
+    name: Build Release Artifacts
+    needs: release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          # Build all Lambda functions
+          for cmd in cmd/*/; do
+            if [ -d "$cmd" ]; then
+              func_name=$(basename "$cmd")
+              echo "Building $func_name for $GOOS/$GOARCH"
+
+              CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=${{ needs.release.outputs.version }}" \
+                -o "dist/${func_name}_${GOOS}_${GOARCH}" \
+                "./${cmd}"
+            fi
+          done
+
+      - name: Create archive
+        run: |
+          cd dist
+          tar -czf standup-bot_${{ needs.release.outputs.version }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz *
+          cd ..
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./dist/standup-bot_${{ needs.release.outputs.version }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+          asset_name: standup-bot_${{ needs.release.outputs.version }}_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz
+          asset_content_type: application/gzip
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [release, build-artifacts]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Setup SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE }}
+          role-session-name: GitHubActions-Release-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and Deploy
+        run: |
+          # Build with production optimizations
+          sam build --use-container
+
+          # Deploy to production
+          sam deploy \
+            --stack-name standup-bot-production \
+            --s3-bucket ${{ secrets.SAM_ARTIFACTS_BUCKET }} \
+            --s3-prefix production \
+            --parameter-overrides \
+              Environment=production \
+              Version=${{ needs.release.outputs.version }} \
+              SlackBotToken=${{ secrets.SLACK_BOT_TOKEN }} \
+              SlackSigningSecret=${{ secrets.SLACK_SIGNING_SECRET }} \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --tags \
+              Environment=production \
+              Version=${{ needs.release.outputs.version }} \
+              ManagedBy=GitHubActions \
+              Repository=${{ github.repository }}
+
+      - name: Run smoke tests
+        run: |
+          WEBHOOK_URL=$(aws cloudformation describe-stacks \
+            --stack-name standup-bot-production \
+            --query 'Stacks[0].Outputs[?OutputKey==`WebhookUrl`].OutputValue' \
+            --output text)
+
+          chmod +x ./scripts/smoke-test.sh
+          ./scripts/smoke-test.sh "$WEBHOOK_URL"
+
+      - name: Create deployment marker
+        run: |
+          # Create a deployment record in DynamoDB for tracking
+          aws dynamodb put-item \
+            --table-name standup-bot-deployments \
+            --item '{
+              "deployment_id": {"S": "'${{ github.run_id }}'"},
+              "version": {"S": "'${{ needs.release.outputs.version }}'"},
+              "timestamp": {"S": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"},
+              "commit_sha": {"S": "'${{ github.sha }}'"},
+              "deployed_by": {"S": "github-actions"}
+            }' || echo "Deployment tracking table not found"
+
+  publish-docker:
+    name: Publish Docker Images
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        run: |
+          # Build images for each Lambda function
+          for cmd in cmd/*/; do
+            if [ -d "$cmd" ] && [ -f "$cmd/Dockerfile" ]; then
+              func_name=$(basename "$cmd")
+
+              docker buildx build \
+                --platform linux/amd64,linux/arm64 \
+                --tag ghcr.io/${{ github.repository_owner }}/standup-bot-${func_name}:${{ needs.release.outputs.version }} \
+                --tag ghcr.io/${{ github.repository_owner }}/standup-bot-${func_name}:latest \
+                --push \
+                "$cmd"
+            fi
+          done
+
+  notify-release:
+    name: Notify Release
+    needs: [release, deploy-production]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Notify success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "🎉 Release ${{ needs.release.outputs.version }} deployed successfully!",
+              attachments: [{
+                color: "good",
+                fields: [
+                  { title: "Version", value: "${{ needs.release.outputs.version }}", short: true },
+                  { title: "Environment", value: "Production", short: true },
+                  { title: "Release Notes", value: "https://github.com/${{ github.repository }}/releases/tag/${{ needs.release.outputs.version }}", short: false }
+                ]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "❌ Release ${{ needs.release.outputs.version }} failed!"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
