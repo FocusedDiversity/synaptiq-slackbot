@@ -97,7 +97,7 @@ func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, us
 }
 
 // SubmitStandupResponse processes a standup submission from a user.
-func (s *Service) SubmitStandupResponse(ctx context.Context, submission *StandupSubmission) error {
+func (s *Service) SubmitStandupResponse(ctx context.Context, submission *Submission) error {
 	logger := s.botCtx.Logger()
 
 	// Create user response
@@ -214,7 +214,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	}
 
 	// Build summary
-	var summaries []*slack.UserResponseSummary
+	summaries := make([]*slack.UserResponseSummary, 0, len(channel.Users()))
 	respondedUsers := make(map[string]bool)
 
 	for _, resp := range responses {
@@ -266,7 +266,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 }
 
 // postResponseToChannel posts a user's response to the channel.
-func (s *Service) postResponseToChannel(ctx context.Context, submission *StandupSubmission) error {
+func (s *Service) postResponseToChannel(ctx context.Context, submission *Submission) error {
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(submission.ChannelID)
 	if !found {
@@ -346,8 +346,8 @@ func (s *Service) sendReminderToUser(ctx context.Context, userID, channelID, cha
 	return nil
 }
 
-// StandupSubmission represents a standup submission.
-type StandupSubmission struct {
+// Submission represents a standup submission.
+type Submission struct {
 	SessionID string
 	ChannelID string
 	Date      string

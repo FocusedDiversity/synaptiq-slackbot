@@ -23,7 +23,10 @@
       "Bash(goimports:*)",
       "Bash(./scripts/fix-lint.sh:*)",
       "Bash(./scripts/ci-summary.sh:*)",
-      "Bash(./scripts/setup-hooks.sh:*)"
+      "Bash(./scripts/setup-hooks.sh:*)",
+      "Bash(./scripts/fix-all-lint.sh:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(go doc:*)"
     ],
     "deny": []
   }

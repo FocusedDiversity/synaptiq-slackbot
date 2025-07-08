@@ -56,7 +56,8 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 	logger := botCtx.Logger()
 
 	// Process each message
-	for _, record := range event.Records {
+	for i := range event.Records {
+		record := &event.Records[i]
 		// Add message ID as request ID
 		ctx := botCtx.WithRequestID(ctx, record.MessageId)
 
@@ -182,8 +183,8 @@ func processGenerateReport(ctx context.Context, task TaskMessage) error {
 	if !ok {
 		startDate = ""
 	}
-	endDate, _ := task.Payload["end_date"].(string)
-	reportType, _ := task.Payload["report_type"].(string)
+	endDate, _ := task.Payload["end_date"].(string)       //nolint:errcheck // optional parameter
+	reportType, _ := task.Payload["report_type"].(string) //nolint:errcheck // optional parameter
 
 	// TODO: Implement report generation
 	// This would:
@@ -208,7 +209,7 @@ func processBulkReminder(ctx context.Context, task TaskMessage) error {
 	}
 
 	// Get reminder time
-	reminderTime, _ := task.Payload["reminder_time"].(string)
+	reminderTime, _ := task.Payload["reminder_time"].(string) //nolint:errcheck // optional parameter
 
 	// Send reminders
 	if err := service.SendReminders(ctx, channelID, reminderTime); err != nil {
@@ -218,7 +219,7 @@ func processBulkReminder(ctx context.Context, task TaskMessage) error {
 	return nil
 }
 
-// This would be called from other Lambda functions.
+// SendAsyncTask sends a task to the processor queue.
 func SendAsyncTask(ctx context.Context, taskType string, channelID string, userID string, payload map[string]interface{}) error {
 	task := TaskMessage{
 		Type:      taskType,

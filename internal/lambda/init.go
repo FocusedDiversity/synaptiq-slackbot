@@ -66,7 +66,7 @@ func Initialize(ctx context.Context, initCfg InitConfig) (botcontext.BotContext,
 	if initCfg.TableName == "" {
 		initCfg.TableName = cfg.DatabaseTable()
 	}
-	dataStore := dynamodbstore.NewDynamoDBStore(dynamoClient, initCfg.TableName, initCfg.TTLDays)
+	dataStore := dynamodbstore.NewStore(dynamoClient, initCfg.TableName, initCfg.TTLDays)
 
 	// Create Slack client
 	slackToken := os.Getenv(initCfg.SlackTokenEnv)

@@ -13,7 +13,7 @@ type ModalBuilder struct {
 }
 
 // NewModalBuilder creates a new modal builder.
-func NewModalBuilder(title string, callbackID string) *ModalBuilder {
+func NewModalBuilder(title, callbackID string) *ModalBuilder {
 	return &ModalBuilder{
 		modal: &Modal{
 			Type:       "modal",
@@ -69,7 +69,7 @@ func (b *ModalBuilder) AddHeader(text string) *ModalBuilder {
 
 // AddSection adds a section block.
 func (b *ModalBuilder) AddSection(text string) *ModalBuilder {
-	b.modal.Blocks = append(b.modal.Blocks, SectionBlock{
+	b.modal.Blocks = append(b.modal.Blocks, &SectionBlock{
 		Type: "section",
 		Text: &TextBlock{
 			Type: "mrkdwn",
@@ -141,7 +141,7 @@ func (b *MessageBuilder) AddHeader(text string) *MessageBuilder {
 
 // AddSection adds a section to the message.
 func (b *MessageBuilder) AddSection(text string) *MessageBuilder {
-	b.blocks = append(b.blocks, SectionBlock{
+	b.blocks = append(b.blocks, &SectionBlock{
 		Type: "section",
 		Text: &TextBlock{
 			Type: "mrkdwn",
@@ -159,14 +159,14 @@ func (b *MessageBuilder) AddFields(fields ...string) *MessageBuilder {
 
 	// Find the last section block
 	for i := len(b.blocks) - 1; i >= 0; i-- {
-		if section, ok := b.blocks[i].(SectionBlock); ok {
+		if section, ok := b.blocks[i].(*SectionBlock); ok {
 			for j := 0; j < len(fields); j += 2 {
 				section.Fields = append(section.Fields, TextBlock{
 					Type: "mrkdwn",
 					Text: fmt.Sprintf("*%s*\n%s", fields[j], fields[j+1]),
 				})
 			}
-			b.blocks[i] = section
+			// No need to reassign as we're modifying the pointer
 			break
 		}
 	}
@@ -211,7 +211,7 @@ func BuildStandupModal(channelID, sessionID string, questions []string) *Modal {
 }
 
 // BuildReminderMessage builds a reminder message.
-func BuildReminderMessage(userName, channelName string, template string) []Block {
+func BuildReminderMessage(userName, channelName, template string) []Block {
 	// Replace template variables
 	text := strings.ReplaceAll(template, "{{.UserName}}", userName)
 	text = strings.ReplaceAll(text, "{{.ChannelName}}", channelName)
@@ -222,7 +222,7 @@ func BuildReminderMessage(userName, channelName string, template string) []Block
 }
 
 // BuildSummaryMessage builds a daily summary message.
-func BuildSummaryMessage(date string, headerTemplate string, responses []*UserResponseSummary) []Block {
+func BuildSummaryMessage(date, headerTemplate string, responses []*UserResponseSummary) []Block {
 	// Replace template variables
 	header := strings.ReplaceAll(headerTemplate, "{{.Date}}", date)
 

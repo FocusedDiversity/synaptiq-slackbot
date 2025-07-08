@@ -177,7 +177,7 @@ func (s *Scheduler) isTimeMatch(currentTime, scheduledTime string) bool {
 	return diff >= 0 && diff < 1
 }
 
-// This can be called at the beginning of each day.
+// StartDailyStandups initializes standup sessions for all active channels.
 func (s *Scheduler) StartDailyStandups(ctx context.Context) error {
 	logger := s.botCtx.Logger()
 

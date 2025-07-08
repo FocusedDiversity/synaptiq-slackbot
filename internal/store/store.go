@@ -40,26 +40,26 @@ type Store interface {
 
 // Errors.
 var (
-	ErrNotFound        = &StoreError{Code: "NOT_FOUND", Message: "Item not found"}
-	ErrAlreadyExists   = &StoreError{Code: "ALREADY_EXISTS", Message: "Item already exists"}
-	ErrInvalidInput    = &StoreError{Code: "INVALID_INPUT", Message: "Invalid input provided"}
-	ErrOperationFailed = &StoreError{Code: "OPERATION_FAILED", Message: "Operation failed"}
+	ErrNotFound        = &Error{Code: "NOT_FOUND", Message: "Item not found"}
+	ErrAlreadyExists   = &Error{Code: "ALREADY_EXISTS", Message: "Item already exists"}
+	ErrInvalidInput    = &Error{Code: "INVALID_INPUT", Message: "Invalid input provided"}
+	ErrOperationFailed = &Error{Code: "OPERATION_FAILED", Message: "Operation failed"}
 )
 
-// StoreError represents a store-specific error.
-type StoreError struct {
+// Error represents a store-specific error.
+type Error struct {
 	Code    string
 	Message string
 	Err     error
 }
 
-func (e *StoreError) Error() string {
+func (e *Error) Error() string {
 	if e.Err != nil {
 		return e.Message + ": " + e.Err.Error()
 	}
 	return e.Message
 }
 
-func (e *StoreError) Unwrap() error {
+func (e *Error) Unwrap() error {
 	return e.Err
 }

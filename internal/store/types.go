@@ -7,10 +7,11 @@ import (
 // SessionStatus represents the status of a standup session.
 type SessionStatus string
 
+// Session status constants define the lifecycle states of a standup session.
 const (
-	SessionPending    SessionStatus = "pending"
-	SessionInProgress SessionStatus = "in_progress"
-	SessionCompleted  SessionStatus = "completed"
+	SessionPending    SessionStatus = "pending"     // Session created but not started
+	SessionInProgress SessionStatus = "in_progress" // Session active and accepting responses
+	SessionCompleted  SessionStatus = "completed"   // Session finished
 )
 
 // Session represents a daily standup session for a channel.

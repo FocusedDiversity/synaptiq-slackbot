@@ -32,7 +32,10 @@ func Chain(middlewares ...Middleware) Middleware {
 // WithRequestID adds a request ID to the context.
 func WithRequestID(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
-		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		return func(
+			ctx context.Context,
+			request events.APIGatewayProxyRequest,
+		) (events.APIGatewayProxyResponse, error) {
 			requestID := request.Headers["X-Request-ID"]
 			if requestID == "" {
 				requestID = uuid.New().String()
@@ -55,7 +58,10 @@ func WithRequestID(botCtx botcontext.BotContext) Middleware {
 // WithLogging adds structured logging to requests.
 func WithLogging(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
-		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		return func(
+			ctx context.Context,
+			request events.APIGatewayProxyRequest,
+		) (events.APIGatewayProxyResponse, error) {
 			start := time.Now()
 			logger := botCtx.Logger()
 
@@ -90,7 +96,10 @@ func WithLogging(botCtx botcontext.BotContext) Middleware {
 // WithTracing adds distributed tracing.
 func WithTracing(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
-		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		return func(
+			ctx context.Context,
+			request events.APIGatewayProxyRequest,
+		) (events.APIGatewayProxyResponse, error) {
 			tracer := botCtx.Tracer()
 			ctx, done := tracer.StartSpan(ctx, "lambda_handler")
 			defer done()
@@ -106,7 +115,10 @@ func WithTracing(botCtx botcontext.BotContext) Middleware {
 // WithRecovery recovers from panics and returns 500.
 func WithRecovery(botCtx botcontext.BotContext) Middleware {
 	return func(next Handler) Handler {
-		return func(ctx context.Context, request events.APIGatewayProxyRequest) (response events.APIGatewayProxyResponse, err error) {
+		return func(
+			ctx context.Context,
+			request events.APIGatewayProxyRequest,
+		) (response events.APIGatewayProxyResponse, err error) {
 			defer func() {
 				if r := recover(); r != nil {
 					logger := botCtx.Logger()
@@ -125,7 +137,10 @@ func WithRecovery(botCtx botcontext.BotContext) Middleware {
 // WithCORS adds CORS headers.
 func WithCORS(allowedOrigins []string) Middleware {
 	return func(next Handler) Handler {
-		return func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+		return func(
+			ctx context.Context,
+			request events.APIGatewayProxyRequest,
+		) (events.APIGatewayProxyResponse, error) {
 			response, err := next(ctx, request)
 
 			// Add CORS headers
@@ -168,7 +183,7 @@ func ParseBody(request events.APIGatewayProxyRequest, v interface{}) error {
 }
 
 // ExtractUserID extracts user ID from various sources.
-func ExtractUserID(request events.APIGatewayProxyRequest) string {
+func ExtractUserID(request *events.APIGatewayProxyRequest) string {
 	// Check path parameters
 	if userID, ok := request.PathParameters["userId"]; ok {
 		return userID

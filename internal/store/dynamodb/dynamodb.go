@@ -15,16 +15,16 @@ import (
 	"github.com/synaptiq/standup-bot/internal/store"
 )
 
-// DynamoDBStore implements the Store interface using DynamoDB.
-type DynamoDBStore struct {
+// Store implements the Store interface using DynamoDB.
+type Store struct {
 	client    *dynamodb.Client
 	tableName string
 	ttlDays   int // TTL for old records in days
 }
 
-// NewDynamoDBStore creates a new DynamoDB store.
-func NewDynamoDBStore(client *dynamodb.Client, tableName string, ttlDays int) store.Store {
-	return &DynamoDBStore{
+// NewStore creates a new DynamoDB store.
+func NewStore(client *dynamodb.Client, tableName string, ttlDays int) store.Store {
+	return &Store{
 		client:    client,
 		tableName: tableName,
 		ttlDays:   ttlDays,
@@ -53,7 +53,7 @@ func reminderKey(channelID, date, userID, time string) (string, string) {
 }
 
 // calculateTTL calculates TTL timestamp for records.
-func (s *DynamoDBStore) calculateTTL(baseTime time.Time) *int64 {
+func (s *Store) calculateTTL(baseTime time.Time) *int64 {
 	if s.ttlDays <= 0 {
 		return nil
 	}
@@ -62,7 +62,7 @@ func (s *DynamoDBStore) calculateTTL(baseTime time.Time) *int64 {
 }
 
 // SaveWorkspaceConfig saves workspace configuration.
-func (s *DynamoDBStore) SaveWorkspaceConfig(ctx context.Context, config *store.WorkspaceConfig) error {
+func (s *Store) SaveWorkspaceConfig(ctx context.Context, config *store.WorkspaceConfig) error {
 	pk, sk := workspaceKey(config.TeamID)
 
 	item := map[string]interface{}{
@@ -78,7 +78,7 @@ func (s *DynamoDBStore) SaveWorkspaceConfig(ctx context.Context, config *store.W
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return &store.StoreError{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
+		return &store.Error{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
 	}
 
 	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -86,14 +86,14 @@ func (s *DynamoDBStore) SaveWorkspaceConfig(ctx context.Context, config *store.W
 		Item:      av,
 	})
 	if err != nil {
-		return &store.StoreError{Code: "PUT_ERROR", Message: "Failed to save workspace config", Err: err}
+		return &store.Error{Code: "PUT_ERROR", Message: "Failed to save workspace config", Err: err}
 	}
 
 	return nil
 }
 
 // GetWorkspaceConfig retrieves workspace configuration.
-func (s *DynamoDBStore) GetWorkspaceConfig(ctx context.Context, teamID string) (*store.WorkspaceConfig, error) {
+func (s *Store) GetWorkspaceConfig(ctx context.Context, teamID string) (*store.WorkspaceConfig, error) {
 	pk, sk := workspaceKey(teamID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -104,7 +104,7 @@ func (s *DynamoDBStore) GetWorkspaceConfig(ctx context.Context, teamID string) (
 		},
 	})
 	if err != nil {
-		return nil, &store.StoreError{Code: "GET_ERROR", Message: "Failed to get workspace config", Err: err}
+		return nil, &store.Error{Code: "GET_ERROR", Message: "Failed to get workspace config", Err: err}
 	}
 
 	if result.Item == nil {
@@ -113,14 +113,14 @@ func (s *DynamoDBStore) GetWorkspaceConfig(ctx context.Context, teamID string) (
 
 	var config store.WorkspaceConfig
 	if err := attributevalue.UnmarshalMap(result.Item, &config); err != nil {
-		return nil, &store.StoreError{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
+		return nil, &store.Error{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
 	}
 
 	return &config, nil
 }
 
 // SaveChannelConfig saves channel configuration.
-func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.ChannelConfig) error {
+func (s *Store) SaveChannelConfig(ctx context.Context, config *store.ChannelConfig) error {
 	pk, sk := channelConfigKey(config.TeamID, config.ChannelID)
 
 	item := map[string]interface{}{
@@ -142,7 +142,7 @@ func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.Cha
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return &store.StoreError{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
+		return &store.Error{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
 	}
 
 	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -150,14 +150,14 @@ func (s *DynamoDBStore) SaveChannelConfig(ctx context.Context, config *store.Cha
 		Item:      av,
 	})
 	if err != nil {
-		return &store.StoreError{Code: "PUT_ERROR", Message: "Failed to save channel config", Err: err}
+		return &store.Error{Code: "PUT_ERROR", Message: "Failed to save channel config", Err: err}
 	}
 
 	return nil
 }
 
 // GetChannelConfig retrieves channel configuration.
-func (s *DynamoDBStore) GetChannelConfig(ctx context.Context, teamID, channelID string) (*store.ChannelConfig, error) {
+func (s *Store) GetChannelConfig(ctx context.Context, teamID, channelID string) (*store.ChannelConfig, error) {
 	pk, sk := channelConfigKey(teamID, channelID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -168,7 +168,7 @@ func (s *DynamoDBStore) GetChannelConfig(ctx context.Context, teamID, channelID 
 		},
 	})
 	if err != nil {
-		return nil, &store.StoreError{Code: "GET_ERROR", Message: "Failed to get channel config", Err: err}
+		return nil, &store.Error{Code: "GET_ERROR", Message: "Failed to get channel config", Err: err}
 	}
 
 	if result.Item == nil {
@@ -177,14 +177,14 @@ func (s *DynamoDBStore) GetChannelConfig(ctx context.Context, teamID, channelID 
 
 	var config store.ChannelConfig
 	if err := attributevalue.UnmarshalMap(result.Item, &config); err != nil {
-		return nil, &store.StoreError{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
+		return nil, &store.Error{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
 	}
 
 	return &config, nil
 }
 
 // ListChannelConfigs lists all channel configurations for a workspace.
-func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) ([]*store.ChannelConfig, error) {
+func (s *Store) ListChannelConfigs(ctx context.Context, teamID string) ([]*store.ChannelConfig, error) {
 	pk := fmt.Sprintf("WORKSPACE#%s", teamID)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk)).And(
@@ -193,7 +193,7 @@ func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) (
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
-		return nil, &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return nil, &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	var configs []*store.ChannelConfig
@@ -207,7 +207,7 @@ func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) (
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, &store.StoreError{Code: "QUERY_ERROR", Message: "Failed to query channel configs", Err: err}
+			return nil, &store.Error{Code: "QUERY_ERROR", Message: "Failed to query channel configs", Err: err}
 		}
 
 		for _, item := range page.Items {
@@ -223,12 +223,12 @@ func (s *DynamoDBStore) ListChannelConfigs(ctx context.Context, teamID string) (
 }
 
 // ListActiveChannelConfigs lists all active channel configurations across all workspaces.
-func (s *DynamoDBStore) ListActiveChannelConfigs(ctx context.Context) ([]*store.ChannelConfig, error) {
+func (s *Store) ListActiveChannelConfigs(ctx context.Context) ([]*store.ChannelConfig, error) {
 	keyCond := expression.Key("GSI1PK").Equal(expression.Value("ACTIVE#true"))
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
-		return nil, &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return nil, &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	var configs []*store.ChannelConfig
@@ -243,7 +243,7 @@ func (s *DynamoDBStore) ListActiveChannelConfigs(ctx context.Context) ([]*store.
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, &store.StoreError{Code: "QUERY_ERROR", Message: "Failed to query active configs", Err: err}
+			return nil, &store.Error{Code: "QUERY_ERROR", Message: "Failed to query active configs", Err: err}
 		}
 
 		for _, item := range page.Items {
@@ -259,7 +259,7 @@ func (s *DynamoDBStore) ListActiveChannelConfigs(ctx context.Context) ([]*store.
 }
 
 // CreateSession creates a new standup session.
-func (s *DynamoDBStore) CreateSession(ctx context.Context, session *store.Session) error {
+func (s *Store) CreateSession(ctx context.Context, session *store.Session) error {
 	pk, sk := sessionKey(session.ChannelID, session.Date)
 
 	item := map[string]interface{}{
@@ -276,7 +276,7 @@ func (s *DynamoDBStore) CreateSession(ctx context.Context, session *store.Sessio
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return &store.StoreError{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
+		return &store.Error{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
 	}
 
 	// Use conditional put to avoid overwriting existing sessions
@@ -290,14 +290,14 @@ func (s *DynamoDBStore) CreateSession(ctx context.Context, session *store.Sessio
 		if errors.As(err, &cfe) {
 			return store.ErrAlreadyExists
 		}
-		return &store.StoreError{Code: "PUT_ERROR", Message: "Failed to create session", Err: err}
+		return &store.Error{Code: "PUT_ERROR", Message: "Failed to create session", Err: err}
 	}
 
 	return nil
 }
 
 // GetSession retrieves a standup session.
-func (s *DynamoDBStore) GetSession(ctx context.Context, channelID, date string) (*store.Session, error) {
+func (s *Store) GetSession(ctx context.Context, channelID, date string) (*store.Session, error) {
 	pk, sk := sessionKey(channelID, date)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -308,7 +308,7 @@ func (s *DynamoDBStore) GetSession(ctx context.Context, channelID, date string) 
 		},
 	})
 	if err != nil {
-		return nil, &store.StoreError{Code: "GET_ERROR", Message: "Failed to get session", Err: err}
+		return nil, &store.Error{Code: "GET_ERROR", Message: "Failed to get session", Err: err}
 	}
 
 	if result.Item == nil {
@@ -317,14 +317,18 @@ func (s *DynamoDBStore) GetSession(ctx context.Context, channelID, date string) 
 
 	var session store.Session
 	if err := attributevalue.UnmarshalMap(result.Item, &session); err != nil {
-		return nil, &store.StoreError{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
+		return nil, &store.Error{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
 	}
 
 	return &session, nil
 }
 
 // UpdateSessionStatus updates the status of a session.
-func (s *DynamoDBStore) UpdateSessionStatus(ctx context.Context, channelID, date string, status store.SessionStatus) error {
+func (s *Store) UpdateSessionStatus(
+	ctx context.Context,
+	channelID, date string,
+	status store.SessionStatus,
+) error {
 	pk, sk := sessionKey(channelID, date)
 
 	update := expression.Set(expression.Name("status"), expression.Value(status))
@@ -334,7 +338,7 @@ func (s *DynamoDBStore) UpdateSessionStatus(ctx context.Context, channelID, date
 
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
-		return &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	_, err = s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
@@ -348,20 +352,20 @@ func (s *DynamoDBStore) UpdateSessionStatus(ctx context.Context, channelID, date
 		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
-		return &store.StoreError{Code: "UPDATE_ERROR", Message: "Failed to update session status", Err: err}
+		return &store.Error{Code: "UPDATE_ERROR", Message: "Failed to update session status", Err: err}
 	}
 
 	return nil
 }
 
 // MarkSummaryPosted marks a session summary as posted.
-func (s *DynamoDBStore) MarkSummaryPosted(ctx context.Context, channelID, date string) error {
+func (s *Store) MarkSummaryPosted(ctx context.Context, channelID, date string) error {
 	pk, sk := sessionKey(channelID, date)
 
 	update := expression.Set(expression.Name("summary_posted"), expression.Value(true))
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
-		return &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	_, err = s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
@@ -375,14 +379,14 @@ func (s *DynamoDBStore) MarkSummaryPosted(ctx context.Context, channelID, date s
 		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
-		return &store.StoreError{Code: "UPDATE_ERROR", Message: "Failed to mark summary posted", Err: err}
+		return &store.Error{Code: "UPDATE_ERROR", Message: "Failed to mark summary posted", Err: err}
 	}
 
 	return nil
 }
 
 // SaveUserResponse saves a user's standup response.
-func (s *DynamoDBStore) SaveUserResponse(ctx context.Context, response *store.UserResponse) error {
+func (s *Store) SaveUserResponse(ctx context.Context, response *store.UserResponse) error {
 	pk, sk := userResponseKey(response.ChannelID, response.Date, response.UserID)
 
 	item := map[string]interface{}{
@@ -401,7 +405,7 @@ func (s *DynamoDBStore) SaveUserResponse(ctx context.Context, response *store.Us
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return &store.StoreError{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
+		return &store.Error{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
 	}
 
 	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -409,14 +413,17 @@ func (s *DynamoDBStore) SaveUserResponse(ctx context.Context, response *store.Us
 		Item:      av,
 	})
 	if err != nil {
-		return &store.StoreError{Code: "PUT_ERROR", Message: "Failed to save user response", Err: err}
+		return &store.Error{Code: "PUT_ERROR", Message: "Failed to save user response", Err: err}
 	}
 
 	return nil
 }
 
 // GetUserResponse retrieves a user's standup response.
-func (s *DynamoDBStore) GetUserResponse(ctx context.Context, channelID, date, userID string) (*store.UserResponse, error) {
+func (s *Store) GetUserResponse(
+	ctx context.Context,
+	channelID, date, userID string,
+) (*store.UserResponse, error) {
 	pk, sk := userResponseKey(channelID, date, userID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -427,7 +434,7 @@ func (s *DynamoDBStore) GetUserResponse(ctx context.Context, channelID, date, us
 		},
 	})
 	if err != nil {
-		return nil, &store.StoreError{Code: "GET_ERROR", Message: "Failed to get user response", Err: err}
+		return nil, &store.Error{Code: "GET_ERROR", Message: "Failed to get user response", Err: err}
 	}
 
 	if result.Item == nil {
@@ -436,14 +443,14 @@ func (s *DynamoDBStore) GetUserResponse(ctx context.Context, channelID, date, us
 
 	var response store.UserResponse
 	if err := attributevalue.UnmarshalMap(result.Item, &response); err != nil {
-		return nil, &store.StoreError{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
+		return nil, &store.Error{Code: "UNMARSHAL_ERROR", Message: "Failed to unmarshal item", Err: err}
 	}
 
 	return &response, nil
 }
 
 // ListUserResponses lists all user responses for a session.
-func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date string) ([]*store.UserResponse, error) {
+func (s *Store) ListUserResponses(ctx context.Context, channelID, date string) ([]*store.UserResponse, error) {
 	pk := fmt.Sprintf("SESSION#%s#%s", channelID, date)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk)).And(
@@ -452,7 +459,7 @@ func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date s
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
-		return nil, &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return nil, &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	var responses []*store.UserResponse
@@ -466,7 +473,7 @@ func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date s
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, &store.StoreError{Code: "QUERY_ERROR", Message: "Failed to query user responses", Err: err}
+			return nil, &store.Error{Code: "QUERY_ERROR", Message: "Failed to query user responses", Err: err}
 		}
 
 		for _, item := range page.Items {
@@ -482,13 +489,13 @@ func (s *DynamoDBStore) ListUserResponses(ctx context.Context, channelID, date s
 }
 
 // IncrementReminderCount increments the reminder count for a user.
-func (s *DynamoDBStore) IncrementReminderCount(ctx context.Context, channelID, date, userID string) error {
+func (s *Store) IncrementReminderCount(ctx context.Context, channelID, date, userID string) error {
 	pk, sk := userResponseKey(channelID, date, userID)
 
 	update := expression.Add(expression.Name("reminder_count"), expression.Value(1))
 	expr, err := expression.NewBuilder().WithUpdate(update).Build()
 	if err != nil {
-		return &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	_, err = s.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
@@ -502,14 +509,14 @@ func (s *DynamoDBStore) IncrementReminderCount(ctx context.Context, channelID, d
 		ExpressionAttributeValues: expr.Values(),
 	})
 	if err != nil {
-		return &store.StoreError{Code: "UPDATE_ERROR", Message: "Failed to increment reminder count", Err: err}
+		return &store.Error{Code: "UPDATE_ERROR", Message: "Failed to increment reminder count", Err: err}
 	}
 
 	return nil
 }
 
 // SaveReminder saves a reminder record.
-func (s *DynamoDBStore) SaveReminder(ctx context.Context, reminder *store.Reminder) error {
+func (s *Store) SaveReminder(ctx context.Context, reminder *store.Reminder) error {
 	pk, sk := reminderKey(reminder.ChannelID, reminder.Date, reminder.UserID, reminder.Time)
 
 	item := map[string]interface{}{
@@ -526,7 +533,7 @@ func (s *DynamoDBStore) SaveReminder(ctx context.Context, reminder *store.Remind
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		return &store.StoreError{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
+		return &store.Error{Code: "MARSHAL_ERROR", Message: "Failed to marshal item", Err: err}
 	}
 
 	_, err = s.client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -534,21 +541,21 @@ func (s *DynamoDBStore) SaveReminder(ctx context.Context, reminder *store.Remind
 		Item:      av,
 	})
 	if err != nil {
-		return &store.StoreError{Code: "PUT_ERROR", Message: "Failed to save reminder", Err: err}
+		return &store.Error{Code: "PUT_ERROR", Message: "Failed to save reminder", Err: err}
 	}
 
 	return nil
 }
 
 // ListReminders lists all reminders for a channel and date.
-func (s *DynamoDBStore) ListReminders(ctx context.Context, channelID, date string) ([]*store.Reminder, error) {
+func (s *Store) ListReminders(ctx context.Context, channelID, date string) ([]*store.Reminder, error) {
 	pk := fmt.Sprintf("REMINDER#%s#%s", channelID, date)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk))
 
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
-		return nil, &store.StoreError{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
+		return nil, &store.Error{Code: "EXPRESSION_ERROR", Message: "Failed to build expression", Err: err}
 	}
 
 	var reminders []*store.Reminder
@@ -562,7 +569,7 @@ func (s *DynamoDBStore) ListReminders(ctx context.Context, channelID, date strin
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx)
 		if err != nil {
-			return nil, &store.StoreError{Code: "QUERY_ERROR", Message: "Failed to query reminders", Err: err}
+			return nil, &store.Error{Code: "QUERY_ERROR", Message: "Failed to query reminders", Err: err}
 		}
 
 		for _, item := range page.Items {
@@ -578,15 +585,19 @@ func (s *DynamoDBStore) ListReminders(ctx context.Context, channelID, date strin
 }
 
 // GetPendingSessions gets all sessions that need processing.
-func (s *DynamoDBStore) GetPendingSessions(ctx context.Context, currentTime time.Time) ([]*store.Session, error) {
+func (s *Store) GetPendingSessions(ctx context.Context, currentTime time.Time) ([]*store.Session, error) {
 	// This would need a GSI on status to be efficient
 	// For now, we'll need to scan or implement differently
 	// In production, we'd create GSI2 with status as partition key
-	return nil, &store.StoreError{Code: "NOT_IMPLEMENTED", Message: "GetPendingSessions not implemented"}
+	return nil, &store.Error{Code: "NOT_IMPLEMENTED", Message: "GetPendingSessions not implemented"}
 }
 
 // GetUsersWithoutResponse gets users who haven't submitted responses.
-func (s *DynamoDBStore) GetUsersWithoutResponse(ctx context.Context, channelID, date string, userIDs []string) ([]string, error) {
+func (s *Store) GetUsersWithoutResponse(
+	ctx context.Context,
+	channelID, date string,
+	userIDs []string,
+) ([]string, error) {
 	// Get all responses for the session
 	responses, err := s.ListUserResponses(ctx, channelID, date)
 	if err != nil {

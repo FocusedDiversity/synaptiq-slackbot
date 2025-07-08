@@ -38,7 +38,7 @@ type SectionBlock struct {
 	Accessory interface{} `json:"accessory,omitempty"`
 }
 
-func (s SectionBlock) BlockType() string { return "section" }
+func (s *SectionBlock) BlockType() string { return "section" }
 
 // HeaderBlock represents a header block.
 type HeaderBlock struct {

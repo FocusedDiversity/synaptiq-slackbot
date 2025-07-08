@@ -44,7 +44,7 @@ func main() {
 }
 
 // handler processes EventBridge scheduled events.
-func handler(ctx context.Context, event events.CloudWatchEvent) error {
+func handler(ctx context.Context, event *events.CloudWatchEvent) error {
 	logger := botCtx.Logger()
 
 	// Add request ID from event

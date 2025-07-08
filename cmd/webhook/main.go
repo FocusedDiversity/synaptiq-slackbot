@@ -57,13 +57,14 @@ func main() {
 	awslambda.Start(handlerFunc)
 }
 
+//nolint:gocritic // Lambda requires value types for request
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// Verify Slack request
 	timestamp := request.Headers["X-Slack-Request-Timestamp"]
 	signature := request.Headers["X-Slack-Signature"]
 
 	if err := verifier.VerifyRequest(timestamp, signature, request.Body); err != nil {
-		return lambda.Unauthorized("Invalid request signature"), nil
+		return lambda.Unauthorized("Invalid request signature"), err
 	}
 
 	// Handle URL verification challenge
@@ -87,7 +88,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
 		// Slash command or interactive component
 		values, err := url.ParseQuery(request.Body)
 		if err != nil {
-			return lambda.BadRequest("Invalid form data"), nil
+			return lambda.BadRequest("Invalid form data"), err
 		}
 
 		if values.Get("command") != "" {
@@ -131,17 +132,17 @@ func handleSlashCommand(ctx context.Context, values url.Values) (events.APIGatew
 
 	switch cmd.Command {
 	case "/standup":
-		return handleStandupCommand(ctx, cmd)
+		return handleStandupCommand(ctx, &cmd)
 	case "/standup-config":
-		return handleConfigCommand(ctx, cmd)
+		return handleConfigCommand(ctx, &cmd)
 	case "/standup-report":
-		return handleReportCommand(ctx, cmd)
+		return handleReportCommand(ctx, &cmd)
 	default:
 		return lambda.SlackEphemeralResponse("Unknown command"), nil
 	}
 }
 
-func handleStandupCommand(ctx context.Context, cmd slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
+func handleStandupCommand(ctx context.Context, cmd *slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
 	// Open standup modal
 	if err := service.OpenStandupModal(ctx, cmd.TriggerID, cmd.ChannelID, cmd.UserID); err != nil {
 		botCtx.Logger().Error(ctx, "Failed to open standup modal", err)
@@ -152,20 +153,22 @@ func handleStandupCommand(ctx context.Context, cmd slack.SlashCommand) (events.A
 	return lambda.OK(""), nil
 }
 
-func handleConfigCommand(ctx context.Context, cmd slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
+func handleConfigCommand(_ context.Context, cmd *slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
 	// TODO: Implement configuration interface
+	_ = cmd // Will be used when configuration interface is implemented
 	return lambda.SlackEphemeralResponse("Configuration interface coming soon!"), nil
 }
 
-func handleReportCommand(ctx context.Context, cmd slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
+func handleReportCommand(_ context.Context, cmd *slack.SlashCommand) (events.APIGatewayProxyResponse, error) {
 	// TODO: Implement reporting interface
+	_ = cmd // Will be used when reporting interface is implemented
 	return lambda.SlackEphemeralResponse("Reporting interface coming soon!"), nil
 }
 
 func handleInteraction(ctx context.Context, payloadStr string) (events.APIGatewayProxyResponse, error) {
 	var payload slack.InteractionCallback
 	if err := json.Unmarshal([]byte(payloadStr), &payload); err != nil {
-		return lambda.BadRequest("Invalid interaction payload"), nil
+		return lambda.BadRequest("Invalid interaction payload"), err
 	}
 
 	// Add user context
@@ -193,34 +196,40 @@ func handleInteraction(ctx context.Context, payloadStr string) (events.APIGatewa
 	}
 }
 
-func handleViewSubmission(ctx context.Context, payload *slack.InteractionCallback) (events.APIGatewayProxyResponse, error) {
+func handleViewSubmission(
+	ctx context.Context,
+	payload *slack.InteractionCallback,
+) (events.APIGatewayProxyResponse, error) {
 	if payload.View == nil {
 		return lambda.BadRequest("Missing view data"), nil
 	}
 
 	switch payload.View.CallbackID {
 	case "standup_submission":
-		return handleStandupSubmission(ctx, payload)
+		return handleSubmission(ctx, payload)
 	default:
 		return lambda.BadRequest("Unknown view callback"), nil
 	}
 }
 
-func handleStandupSubmission(ctx context.Context, payload *slack.InteractionCallback) (events.APIGatewayProxyResponse, error) {
+func handleSubmission(
+	ctx context.Context,
+	payload *slack.InteractionCallback,
+) (events.APIGatewayProxyResponse, error) {
 	// Parse modal metadata
 	metadata, err := slack.ParseModalMetadata(payload.View.PrivateMetadata)
 	if err != nil {
-		return lambda.BadRequest("Invalid modal metadata"), nil
+		return lambda.BadRequest("Invalid modal metadata"), err
 	}
 
 	// Parse responses
 	responses, err := slack.ParseModalSubmission(payload.View)
 	if err != nil {
-		return lambda.BadRequest("Failed to parse submission"), nil
+		return lambda.BadRequest("Failed to parse submission"), err
 	}
 
 	// Create submission
-	submission := &standup.StandupSubmission{
+	submission := &standup.Submission{
 		SessionID: metadata.SessionID,
 		ChannelID: metadata.ChannelID,
 		Date:      metadata.Date,
@@ -239,15 +248,19 @@ func handleStandupSubmission(ctx context.Context, payload *slack.InteractionCall
 	return lambda.OK(""), nil
 }
 
-func handleBlockActions(ctx context.Context, payload *slack.InteractionCallback) (events.APIGatewayProxyResponse, error) {
+func handleBlockActions(
+	_ context.Context,
+	payload *slack.InteractionCallback,
+) (events.APIGatewayProxyResponse, error) {
 	// TODO: Handle block actions if needed
+	_ = payload // Will be used when block actions are implemented
 	return lambda.OK(""), nil
 }
 
 func handleEvent(ctx context.Context, body string) (events.APIGatewayProxyResponse, error) {
 	var wrapper slack.EventWrapper
 	if err := json.Unmarshal([]byte(body), &wrapper); err != nil {
-		return lambda.BadRequest("Invalid event payload"), nil
+		return lambda.BadRequest("Invalid event payload"), err
 	}
 
 	// Handle different event types
