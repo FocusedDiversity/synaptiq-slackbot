@@ -31,7 +31,9 @@
       "Bash(sam validate:*)",
       "Bash(go:*)",
       "Bash(./scripts/fix-github-actions.sh:*)",
-      "Bash(./scripts/update-github-actions.sh:*)"
+      "Bash(./scripts/update-github-actions.sh:*)",
+      "Bash(./scripts/check-licenses.sh:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

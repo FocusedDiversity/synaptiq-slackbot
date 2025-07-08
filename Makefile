@@ -54,6 +54,11 @@ security:
 	@gosec -quiet ./...
 	@echo "Security checks complete!"
 
+# Check licenses
+licenses:
+	@echo "Checking licenses..."
+	@./scripts/check-licenses.sh
+
 # Local development with hot reload
 dev:
 	@echo "Starting local development..."
@@ -185,6 +190,7 @@ help:
 	@echo "  make lint           - Run linters"
 	@echo "  make fmt            - Format code"
 	@echo "  make security       - Run security checks"
+	@echo "  make licenses       - Check dependency licenses"
 	@echo "  make dev            - Start local development"
 	@echo "  make deploy         - Deploy to AWS"
 	@echo "  make logs-webhook   - View webhook function logs"

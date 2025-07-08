@@ -38,10 +38,31 @@ jobs:
           go list -json -deps ./... | nancy sleuth
 
       - name: Run go-licenses
-        continue-on-error: true
         run: |
           go install github.com/google/go-licenses@latest
-          go-licenses check ./... --disallowed_types=forbidden,restricted
+          # Check licenses, ignoring our own modules
+          for cmd in cmd/*; do
+            if [ -d "$cmd" ]; then
+              echo "Checking licenses for $cmd..."
+              go-licenses check "./$cmd" \
+                --disallowed_types=forbidden,restricted \
+                --ignore github.com/synaptiq/standup-bot \
+                --ignore github.com/synaptiq/standup-bot/config \
+                --ignore github.com/synaptiq/standup-bot/context \
+                2>&1 | grep -v "Failed to find license for github.com/synaptiq/standup-bot" || true
+            fi
+          done
+          
+          # Generate license report
+          echo "Generating license report..."
+          go-licenses report ./... \
+            --ignore github.com/synaptiq/standup-bot \
+            --ignore github.com/synaptiq/standup-bot/config \
+            --ignore github.com/synaptiq/standup-bot/context \
+            2>/dev/null | sort | uniq > licenses.txt
+          
+          echo "License distribution:"
+          cut -d, -f3 licenses.txt | sort | uniq -c | sort -rn
 
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@v1

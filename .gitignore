@@ -48,3 +48,6 @@ coverage.html
 # Config files with secrets
 config.yaml
 !config.example.yaml
+
+# Generated files
+licenses.txt

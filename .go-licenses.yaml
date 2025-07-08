@@ -1,0 +1,30 @@
+# go-licenses configuration
+# This file configures which licenses are allowed for dependencies
+
+# Allowed license types
+allowed:
+  - Apache-2.0
+  - BSD-2-Clause
+  - BSD-3-Clause
+  - ISC
+  - MIT
+  - MPL-2.0
+  - Unlicense
+
+# Explicitly forbidden licenses
+forbidden:
+  - AGPL-3.0
+  - GPL-2.0
+  - GPL-3.0
+  - LGPL-2.1
+  - LGPL-3.0
+
+# Restricted licenses (require manual review)
+restricted:
+  - CC-BY-4.0
+  - CC-BY-SA-4.0
+
+# Override specific packages if needed
+# overrides:
+#   - package: github.com/some/package
+#     license: MIT
