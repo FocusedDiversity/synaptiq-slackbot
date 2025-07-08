@@ -23,7 +23,7 @@ database:
   region: "us-east-1"
 
 channels:
-  - id: "C1234567890"
+  - id: "C1234567890"  # pragma: allowlist secret
     name: "engineering-standup"
     enabled: true
     schedule:

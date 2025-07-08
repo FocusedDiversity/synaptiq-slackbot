@@ -44,7 +44,7 @@ func main() {
 
 	// Example: Using the context in a request handler
 	ctx := context.Background()
-	handleStandupRequest(ctx, botCtx, "U1234567890", "C1234567890")
+	handleStandupRequest(ctx, botCtx, "U1234567890", "C1234567890") // pragma: allowlist secret
 }
 
 func handleStandupRequest(ctx context.Context, botCtx botcontext.BotContext, userID, channelID string) {
@@ -104,7 +104,7 @@ func handleStandupRequest(ctx context.Context, botCtx botcontext.BotContext, use
 	// 2. Collect user responses
 	// 3. Store in DynamoDB
 	// 4. Post to channel if needed
-	
+
 	logger.Info(ctx, "Standup request handled successfully")
 }
 

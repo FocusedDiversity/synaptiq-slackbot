@@ -5,6 +5,7 @@ A serverless Slack bot built with Go and AWS Lambda that automates daily standup
 ## 🚀 Overview
 
 This bot helps distributed teams run efficient asynchronous standups by:
+
 - 📅 Automatically collecting daily standup updates from team members
 - 🔔 Sending personalized DM reminders to team members who haven't submitted
 - 📊 Posting daily summaries showing who has/hasn't submitted updates
@@ -73,24 +74,28 @@ The application follows a serverless architecture deployed on AWS:
 ### Local Development
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/synaptiq/standup-bot.git
    cd standup-bot
    ```
 
 2. **Copy environment configuration**
+
    ```bash
    cp .env.example .env
    # Edit .env with your Slack tokens and AWS settings
    ```
 
 3. **Copy and configure the bot**
+
    ```bash
    cp config.example.yaml config.yaml
    # Edit config.yaml with your channel IDs and team settings
    ```
 
 4. **Start local development environment**
+
    ```bash
    make dev
    ```
@@ -101,6 +106,7 @@ The application follows a serverless architecture deployed on AWS:
    - LocalStack for AWS services
 
 5. **Run tests**
+
    ```bash
    make test
    ```
@@ -111,7 +117,7 @@ The bot is configured via YAML file. See `config.example.yaml` for a complete ex
 
 ```yaml
 channels:
-  - id: "C1234567890"
+  - id: "C1234567890"  # pragma: allowlist secret
     name: "engineering-standup"
     schedule:
       timezone: "America/New_York"
@@ -128,12 +134,14 @@ channels:
 This codebase uses a modular architecture with two foundational modules:
 
 ### Configuration Module (`config/`)
+
 - YAML-based configuration with environment variable support
 - Comprehensive validation
 - Thread-safe operations
 - Hot-reload capability
 
 ### Context Module (`context/`)
+
 - Centralized dependency injection
 - Request-scoped data management
 - Structured logging and tracing
@@ -165,6 +173,7 @@ make logs-scheduler   # View scheduler Lambda logs
 ### Code Quality
 
 The project uses:
+
 - `golangci-lint` for comprehensive linting
 - `gofumpt` for consistent formatting
 - Pre-commit hooks for automated checks
@@ -175,16 +184,19 @@ The project uses:
 ### Deploy to AWS
 
 1. **Configure AWS credentials**
+
    ```bash
    aws configure
    ```
 
 2. **Deploy to development**
+
    ```bash
    make deploy-dev
    ```
 
 3. **Deploy to production** (requires confirmation)
+
    ```bash
    make deploy-prod
    ```
@@ -192,6 +204,7 @@ The project uses:
 ### Infrastructure
 
 The application uses AWS SAM for infrastructure as code. Key resources:
+
 - 3 Lambda functions (webhook, scheduler, processor)
 - DynamoDB table with on-demand billing
 - API Gateway for Slack webhooks
@@ -208,6 +221,7 @@ This codebase includes a `CLAUDE.md` file with specific instructions and pattern
 4. **Debugging Tools**: Comprehensive logging, distributed tracing, local development environment
 
 When working with Claude Code:
+
 - Run `make lint` before committing changes
 - Add tests for new functionality
 - Follow existing patterns for consistency
@@ -242,6 +256,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 📞 Support
 
 For issues and questions:
+
 - Check the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) guide
 - Open an issue on GitHub
 - Contact the maintainers

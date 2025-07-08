@@ -7,22 +7,26 @@ A serverless Slack bot application built with Go and deployed on AWS Lambda that
 ## Core Requirements
 
 ### 1. Standup Update Tracking
+
 - Track when each user submits their standup update
 - Store update history for reporting and analytics
 - Support multiple channels with different configurations
 
 ### 2. Reminder System
+
 - Send DM reminders to users who haven't submitted updates
 - Configurable reminder times and frequencies
 - Respect user timezone preferences
 
 ### 3. Daily Summary
+
 - Post a summary to the configured channel each day
 - List users who have submitted updates
 - Highlight users who haven't submitted updates
 - Configurable summary posting time
 
 ### 4. Configuration-Driven Design
+
 - YAML-based configuration file
 - Hot-reloadable configuration updates
 - Per-channel configuration support
@@ -66,7 +70,7 @@ version: "1.0"
 bot:
   token: "${SLACK_BOT_TOKEN}"  # Environment variable substitution
   app_token: "${SLACK_APP_TOKEN}"
-  
+
 # Database configuration
 database:
   table_name: "standup-bot"
@@ -74,10 +78,10 @@ database:
 
 # Channel configurations
 channels:
-  - id: "C1234567890"
+  - id: "C1234567890"  # pragma: allowlist secret
     name: "engineering-standup"
     enabled: true
-    
+
     # Standup schedule
     schedule:
       timezone: "America/New_York"
@@ -86,7 +90,7 @@ channels:
         - "08:30"
         - "08:50"
       active_days: ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    
+
     # Users required to submit updates
     users:
       - id: "U1234567890"
@@ -95,14 +99,14 @@ channels:
       - id: "U0987654321"
         name: "bob"
         timezone: "America/Chicago"
-    
+
     # Message templates
     templates:
       reminder: "Hey {{.UserName}}! Don't forget to submit your standup update for #{{.ChannelName}}"
       summary_header: "📊 Daily Standup Summary for {{.Date}}"
       user_completed: "✅ {{.UserName}} - {{.Time}}"
       user_missing: "❌ {{.UserName}} - No update"
-    
+
     # Questions for standup
     questions:
       - "What did you work on yesterday?"
@@ -131,18 +135,18 @@ import (
 type BotContext interface {
     // Configuration access
     Config() config.Config
-    
+
     // AWS service clients
     DynamoDB() DynamoDBClient
     SecretsManager() SecretsClient
-    
+
     // Slack client
     SlackClient() SlackClient
-    
+
     // Tracing and monitoring
     Tracer() Tracer
     Logger() Logger
-    
+
     // Request-scoped data
     WithRequestID(ctx context.Context, requestID string) context.Context
     RequestID(ctx context.Context) string
@@ -166,22 +170,22 @@ import "time"
 type Config interface {
     // Version information
     Version() string
-    
+
     // Bot settings
     BotToken() string
     AppToken() string
-    
+
     // Database settings
     DatabaseTable() string
     DatabaseRegion() string
-    
+
     // Channel configurations
     Channels() []ChannelConfig
     ChannelByID(id string) (ChannelConfig, bool)
-    
+
     // Feature flags
     IsFeatureEnabled(feature string) bool
-    
+
     // Reload configuration
     Reload() error
 }
@@ -191,22 +195,22 @@ type ChannelConfig interface {
     ID() string
     Name() string
     IsEnabled() bool
-    
+
     // Schedule settings
     Timezone() *time.Location
     SummaryTime() time.Time
     ReminderTimes() []time.Time
     IsActiveDay(day time.Weekday) bool
-    
+
     // User management
     Users() []UserConfig
     UserByID(id string) (UserConfig, bool)
     IsUserRequired(userID string) bool
-    
+
     // Templates
     ReminderTemplate() string
     SummaryTemplate() string
-    
+
     // Questions
     Questions() []string
 }
@@ -261,6 +265,7 @@ Attributes:
 ## Implementation Phases
 
 ### Phase 1: Foundation (Current Focus)
+
 1. Initialize Go modules structure
 2. Implement configuration module with YAML support
 3. Implement shared context module
@@ -268,18 +273,21 @@ Attributes:
 5. Implement DynamoDB data layer
 
 ### Phase 2: Core Functionality
+
 1. Slack event webhook handler
 2. Standup response collection via modal
 3. Response storage in DynamoDB
 4. Basic daily summary generation
 
 ### Phase 3: Reminder System
+
 1. Scheduler Lambda for reminder triggers
 2. DM reminder sending
 3. Reminder tracking and rate limiting
 4. Timezone-aware scheduling
 
 ### Phase 4: Enhanced Features
+
 1. Threading support for responses
 2. Analytics and reporting
 3. Vacation mode
@@ -289,18 +297,21 @@ Attributes:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Configuration parsing and validation
 - Context creation and management
 - Business logic in standup package
 - Data access layer
 
 ### Integration Tests
+
 - Lambda handler integration
 - Slack API integration
 - DynamoDB operations
 - End-to-end workflows
 
 ### Load Tests
+
 - Concurrent user submissions
 - High-volume reminder sending
 - DynamoDB throughput limits

@@ -162,11 +162,11 @@ func (v *validator) validateSchedule(ch ChannelConfig) error {
 	// Validate reminder times are before summary time
 	summaryHour := ch.SummaryTime().Hour()
 	summaryMin := ch.SummaryTime().Minute()
-	
+
 	for _, rt := range ch.ReminderTimes() {
 		reminderHour := rt.Hour()
 		reminderMin := rt.Minute()
-		
+
 		if reminderHour > summaryHour || (reminderHour == summaryHour && reminderMin >= summaryMin) {
 			return fmt.Errorf("reminder time %02d:%02d must be before summary time %02d:%02d",
 				reminderHour, reminderMin, summaryHour, summaryMin)

@@ -13,10 +13,10 @@ type contextKey string
 const (
 	// RequestIDKey is the context key for request ID
 	RequestIDKey contextKey = "request_id"
-	
+
 	// UserIDKey is the context key for user ID
 	UserIDKey contextKey = "user_id"
-	
+
 	// ChannelIDKey is the context key for channel ID
 	ChannelIDKey contextKey = "channel_id"
 )
@@ -29,7 +29,7 @@ type BotContext interface {
 
 	// AWS service clients
 	DynamoDB() DynamoDBClient
-	SecretsManager() SecretsClient
+	SecretsManager() SecretsClient // pragma: allowlist secret
 
 	// Slack client
 	SlackClient() SlackClient
@@ -41,11 +41,11 @@ type BotContext interface {
 	// Request-scoped data
 	WithRequestID(ctx context.Context, requestID string) context.Context
 	RequestID(ctx context.Context) string
-	
+
 	// User-scoped data
 	WithUserID(ctx context.Context, userID string) context.Context
 	UserID(ctx context.Context) string
-	
+
 	// Channel-scoped data
 	WithChannelID(ctx context.Context, channelID string) context.Context
 	ChannelID(ctx context.Context) string

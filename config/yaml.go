@@ -147,7 +147,7 @@ func (c *yamlConfig) DatabaseRegion() string {
 func (c *yamlConfig) Channels() []ChannelConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	channels := make([]ChannelConfig, 0, len(c.channels))
 	for _, ch := range c.channels {
 		channels = append(channels, ch)
@@ -158,7 +158,7 @@ func (c *yamlConfig) Channels() []ChannelConfig {
 func (c *yamlConfig) ChannelByID(id string) (ChannelConfig, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	ch, ok := c.channels[id]
 	return ch, ok
 }
@@ -166,7 +166,7 @@ func (c *yamlConfig) ChannelByID(id string) (ChannelConfig, bool) {
 func (c *yamlConfig) IsFeatureEnabled(feature string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	enabled, ok := c.features[feature]
 	return ok && enabled
 }

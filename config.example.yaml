@@ -19,7 +19,7 @@ channels:
   - id: "C1234567890"              # Replace with your channel ID
     name: "engineering-standup"
     enabled: true
-    
+
     # Schedule configuration
     schedule:
       timezone: "America/New_York"
@@ -28,7 +28,7 @@ channels:
         - "08:30"
         - "08:50"
       active_days: ["Mon", "Tue", "Wed", "Thu", "Fri"]  # Weekdays only
-    
+
     # Team members required to submit updates
     users:
       - id: "U1234567890"          # Replace with actual user IDs
@@ -40,14 +40,14 @@ channels:
       - id: "U1111111111"
         name: "charlie"
         timezone: "Europe/London"
-    
+
     # Message templates (supports Go template syntax)
     templates:
       reminder: "Hey {{.UserName}}! 👋 Don't forget to submit your standup update for #{{.ChannelName}}"
       summary_header: "📊 Daily Standup Summary for {{.Date}}"
       user_completed: "✅ {{.UserName}} - submitted at {{.Time}}"
       user_missing: "❌ {{.UserName}} - No update"
-    
+
     # Standup questions
     questions:
       - "What did you work on yesterday?"
@@ -58,7 +58,7 @@ channels:
   - id: "C0987654321"
     name: "product-standup"
     enabled: false                 # This channel is disabled
-    
+
     schedule:
       timezone: "America/Los_Angeles"
       summary_time: "09:30"
@@ -66,7 +66,7 @@ channels:
         - "09:00"
         - "09:20"
       active_days: ["Mon", "Tue", "Wed", "Thu", "Fri"]
-    
+
     users:
       - id: "U2222222222"
         name: "dana"
@@ -74,13 +74,13 @@ channels:
       - id: "U3333333333"
         name: "eve"
         timezone: "America/Denver"
-    
+
     templates:
       reminder: "🔔 {{.UserName}}, please submit your standup for #{{.ChannelName}}"
       summary_header: "📋 Product Team Standup - {{.Date}}"
       user_completed: "✓ {{.UserName}} ({{.Time}})"
       user_missing: "⚠️ {{.UserName}} - Missing"
-    
+
     questions:
       - "Yesterday's accomplishments?"
       - "Today's priorities?"

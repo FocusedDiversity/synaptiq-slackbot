@@ -63,7 +63,7 @@ See `config.example.yaml` for a complete example. Key sections:
 
 The context module (`context/`) provides a centralized way to manage application state, dependencies, and request-scoped data.
 
-### Features
+### Context Features
 
 - **Dependency injection** for AWS and Slack clients
 - **Request-scoped data** (request ID, user ID, channel ID)
@@ -71,7 +71,7 @@ The context module (`context/`) provides a centralized way to manage application
 - **Structured logging** with automatic context enrichment
 - **Distributed tracing** support
 
-### Usage
+### Context Usage
 
 ```go
 import (
@@ -147,6 +147,7 @@ go test -v
 ```
 
 The tests demonstrate:
+
 - Configuration loading and validation
 - Error handling
 - Thread safety

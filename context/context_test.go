@@ -51,7 +51,7 @@ func (m *mockDynamoDBClient) Query(ctx context.Context, params interface{}) ([]i
 type mockSecretsClient struct{}
 
 func (m *mockSecretsClient) GetSecret(ctx context.Context, secretID string) (string, error) {
-	return "secret-value", nil
+	return "secret-value", nil // pragma: allowlist secret
 }
 
 type mockSlackClient struct{}
@@ -344,7 +344,7 @@ func TestConcurrentAccess(t *testing.T) {
 
 	// Test concurrent config access and reload
 	done := make(chan bool)
-	
+
 	// Multiple readers
 	for i := 0; i < 10; i++ {
 		go func() {

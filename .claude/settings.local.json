@@ -10,7 +10,11 @@
       "Bash(go mod init:*)",
       "Bash(go get:*)",
       "Bash(go test:*)",
-      "Bash(go mod:*)"
+      "Bash(go mod:*)",
+      "Bash(true)",
+      "Bash(pre-commit run markdownlint:*)",
+      "Bash(go build:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

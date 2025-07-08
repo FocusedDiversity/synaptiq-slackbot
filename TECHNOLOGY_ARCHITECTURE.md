@@ -7,12 +7,13 @@ This document outlines a serverless, scale-to-zero architecture for a Slack stan
 ## Recommended Stack: AWS SAM + Lambda
 
 ### Core Architecture
+
 **Go + AWS Lambda + API Gateway + DynamoDB**
 
 > **Decision**: We will use DynamoDB as our primary database to achieve true scale-to-zero costs. If complex reporting requirements emerge that cannot be efficiently handled with DynamoDB, we will evaluate migrating to Aurora Serverless v2 at that time.
 
 - **Rationale**: True scale-to-zero with pay-per-use pricing
-- **Benefits**: 
+- **Benefits**:
   - Zero cost when not in use (with DynamoDB)
   - Automatic scaling to handle any load
   - No infrastructure management
@@ -297,6 +298,7 @@ Resources:
 ## Lambda Functions
 
 ### Webhook Handler
+
 ```go
 // cmd/webhook/main.go
 package main
@@ -315,18 +317,18 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
     if !verifySlackSignature(request) {
         return events.APIGatewayProxyResponse{StatusCode: 401}, nil
     }
-    
+
     // Handle URL verification challenge
     var payload map[string]interface{}
     json.Unmarshal([]byte(request.Body), &payload)
-    
+
     if payload["type"] == "url_verification" {
         return events.APIGatewayProxyResponse{
             StatusCode: 200,
             Body: payload["challenge"].(string),
         }, nil
     }
-    
+
     // Invoke processor Lambda asynchronously
     lambdaClient := lambda.NewFromConfig(cfg)
     lambdaClient.Invoke(ctx, &lambda.InvokeInput{
@@ -334,7 +336,7 @@ func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events
         InvocationType: aws.String("Event"), // Async
         Payload:        []byte(request.Body),
     })
-    
+
     // Return immediately
     return events.APIGatewayProxyResponse{StatusCode: 200}, nil
 }
@@ -345,6 +347,7 @@ func main() {
 ```
 
 ### Scheduler Function
+
 ```go
 // cmd/scheduler/main.go
 package main
@@ -361,7 +364,7 @@ func handler(ctx context.Context) error {
     if err != nil {
         return err
     }
-    
+
     now := time.Now()
     for _, config := range configs {
         if shouldTriggerStandup(config, now) {
@@ -372,7 +375,7 @@ func handler(ctx context.Context) error {
             })
         }
     }
-    
+
     return nil
 }
 ```
@@ -380,6 +383,7 @@ func handler(ctx context.Context) error {
 ## Database Schemas
 
 ### Option 1: DynamoDB Schema (Single Table Design)
+
 ```
 # Workspace
 PK: WORKSPACE#<team_id>
@@ -408,6 +412,7 @@ TTL: <unix_timestamp>
 ```
 
 ### Option 2: Aurora Serverless v2 PostgreSQL Schema
+
 ```sql
 -- Workspaces table
 CREATE TABLE workspaces (
@@ -468,7 +473,7 @@ CREATE INDEX idx_responses_session ON standup_responses(session_id, submitted_at
 
 -- Example queries for reporting
 -- Get participation rate for a channel
-SELECT 
+SELECT
     date_trunc('week', s.scheduled_for) as week,
     COUNT(DISTINCT r.user_id) as participants,
     AVG(r.response_time_seconds) as avg_response_time
@@ -482,6 +487,7 @@ ORDER BY week DESC;
 ## Database Access Patterns
 
 ### DynamoDB Go Implementation
+
 ```go
 // internal/store/dynamodb.go
 type DynamoStore struct {
@@ -519,6 +525,7 @@ func (s *DynamoStore) StoreResponse(ctx context.Context, resp StandupResponse) e
 ```
 
 ### Aurora PostgreSQL Go Implementation
+
 ```go
 // internal/store/postgres.go
 type PostgresStore struct {
@@ -537,11 +544,11 @@ func (s *PostgresStore) GetActiveConfigs(ctx context.Context) ([]StandupConfig, 
         return nil, err
     }
     defer rows.Close()
-    
+
     var configs []StandupConfig
     for rows.Next() {
         var c StandupConfig
-        err := rows.Scan(&c.ID, &c.WorkspaceID, &c.ChannelID, 
+        err := rows.Scan(&c.ID, &c.WorkspaceID, &c.ChannelID,
                         &c.Schedule, &c.Timezone, &c.Questions)
         if err != nil {
             return nil, err
@@ -558,7 +565,7 @@ func (s *PostgresStore) StoreResponse(ctx context.Context, resp StandupResponse)
         return err
     }
     defer tx.Rollback(ctx)
-    
+
     // Insert response
     _, err = tx.Exec(ctx, `
         INSERT INTO standup_responses (session_id, user_id, user_name, responses, submitted_at)
@@ -566,22 +573,22 @@ func (s *PostgresStore) StoreResponse(ctx context.Context, resp StandupResponse)
         ON CONFLICT (session_id, user_id) DO UPDATE
         SET responses = $4, submitted_at = $5
     `, resp.SessionID, resp.UserID, resp.UserName, resp.Responses, resp.SubmittedAt)
-    
+
     if err != nil {
         return err
     }
-    
+
     // Update participant count
     _, err = tx.Exec(ctx, `
-        UPDATE standup_sessions 
+        UPDATE standup_sessions
         SET participant_count = (
-            SELECT COUNT(DISTINCT user_id) 
-            FROM standup_responses 
+            SELECT COUNT(DISTINCT user_id)
+            FROM standup_responses
             WHERE session_id = $1
         )
         WHERE id = $1
     `, resp.SessionID)
-    
+
     return tx.Commit(ctx)
 }
 ```
@@ -592,26 +599,27 @@ func (s *PostgresStore) StoreResponse(ctx context.Context, resp StandupResponse)
 .PHONY: build deploy test
 
 build:
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o bootstrap main.go
+ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o bootstrap main.go
 
 deploy:
-	sam build
-	sam deploy --guided
+ sam build
+ sam deploy --guided
 
 test:
-	go test ./...
+ go test ./...
 
 local:
-	sam local start-api --env-vars local-env.json
+ sam local start-api --env-vars local-env.json
 
 clean:
-	rm -rf .aws-sam/
-	find . -name bootstrap -delete
+ rm -rf .aws-sam/
+ find . -name bootstrap -delete
 ```
 
 ## Development Workflow
 
 ### Local Development
+
 ```bash
 # Install SAM CLI
 brew install aws-sam-cli
@@ -624,6 +632,7 @@ ngrok http 3000
 ```
 
 ### Deployment
+
 ```bash
 # First time deployment
 sam deploy --guided
@@ -638,8 +647,9 @@ sam logs -f WebhookFunction --tail
 ## Cost Analysis
 
 ### AWS Lambda Pricing (Scale-to-Zero)
+
 - **Free Tier**: 1M requests/month, 400,000 GB-seconds
-- **Beyond Free Tier**: 
+- **Beyond Free Tier**:
   - $0.20 per 1M requests
   - $0.0000166667 per GB-second
 
@@ -653,13 +663,16 @@ sam logs -f WebhookFunction --tail
 | 5000+ | $20-50/month | $172+/month |
 
 ### Example Cost Breakdown (1000 users)
+
 **DynamoDB Option:**
+
 - Lambda: $0 (free tier)
-- API Gateway: $0 (free tier) 
+- API Gateway: $0 (free tier)
 - DynamoDB: ~$2/month
 - **Total: ~$2/month**
 
 **Aurora Serverless v2 Option:**
+
 - Lambda: $0 (free tier)
 - API Gateway: $0 (free tier)
 - Aurora: $43-86/month (0.5-1 ACU)
@@ -670,6 +683,7 @@ sam logs -f WebhookFunction --tail
 ## Performance Optimizations
 
 ### 1. Lambda Cold Starts
+
 ```go
 // Minimize cold starts
 func init() {
@@ -681,6 +695,7 @@ func init() {
 ```
 
 ### 2. Connection Reuse
+
 ```go
 // Reuse HTTP client across invocations
 var httpClient = &http.Client{
@@ -693,6 +708,7 @@ var httpClient = &http.Client{
 ```
 
 ### 3. Provisioned Concurrency (if needed)
+
 ```yaml
 ProvisionedConcurrencyConfig:
   ProvisionedConcurrentExecutions: 2
@@ -701,6 +717,7 @@ ProvisionedConcurrencyConfig:
 ## Security Best Practices
 
 ### 1. Secrets Management
+
 ```yaml
 SlackBotToken:
   Type: AWS::SecretsManager::Secret
@@ -713,6 +730,7 @@ SlackBotToken:
 ```
 
 ### 2. IAM Roles (Least Privilege)
+
 ```yaml
 Policies:
   - Version: '2012-10-17'
@@ -726,6 +744,7 @@ Policies:
 ```
 
 ### 3. API Gateway Throttling
+
 ```yaml
 MethodSettings:
   - ResourcePath: "/*"
@@ -737,24 +756,27 @@ MethodSettings:
 ## Monitoring and Observability
 
 ### CloudWatch Metrics
+
 - Lambda invocations and errors
 - API Gateway 4xx/5xx errors
 - DynamoDB consumed capacity
 - Cold start frequency
 
 ### X-Ray Tracing
+
 ```go
 import "github.com/aws/aws-xray-sdk-go/xray"
 
 func handler(ctx context.Context) error {
     ctx, seg := xray.BeginSegment(ctx, "standup-handler")
     defer seg.Close(nil)
-    
+
     // Your code here
 }
 ```
 
 ### Alarms
+
 ```yaml
 HighErrorRate:
   Type: AWS::CloudWatch::Alarm
@@ -770,16 +792,19 @@ HighErrorRate:
 ## Migration from Development to Production
 
 ### 1. Development (Socket Mode)
+
 - Use Socket Mode for local development
 - No public URL required
 - Easier debugging
 
 ### 2. Staging (Lambda + ngrok)
+
 - Deploy to Lambda
 - Use ngrok for public URL
 - Test with real Slack events
 
 ### 3. Production (Full Lambda)
+
 - Custom domain with Route53
 - CloudFront distribution
 - Multi-region failover (optional)
@@ -794,14 +819,16 @@ HighErrorRate:
 
 ## Decision Matrix
 
-### Choose DynamoDB When:
+### Choose DynamoDB When
+
 - Cost is the primary concern (true $0 idle)
 - You have predictable access patterns
 - Real-time performance is critical
 - You want simpler infrastructure (no VPC)
 - Team is comfortable with NoSQL patterns
 
-### Choose Aurora Serverless v2 When:
+### Choose Aurora Serverless v2 When
+
 - You need complex reporting and analytics
 - Team has strong SQL expertise
 - You can accept $43/month minimum cost
@@ -809,7 +836,9 @@ HighErrorRate:
 - Future features may require complex queries
 
 ## Hybrid Approach (Best of Both Worlds)
+
 Consider using both databases:
+
 1. **DynamoDB** for real-time operations (webhooks, storing responses)
 2. **Aurora** for analytics and reporting (ETL from DynamoDB via Lambda)
 3. Use DynamoDB Streams to trigger Lambda for data sync
@@ -817,6 +846,7 @@ Consider using both databases:
 ## Conclusion
 
 The AWS SAM + Lambda architecture provides:
+
 - **Flexible database options** to match your needs
 - **True scale-to-zero** with DynamoDB ($0 idle cost)
 - **Rich querying** with Aurora Serverless v2

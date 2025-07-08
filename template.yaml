@@ -1,0 +1,290 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Synaptiq Standup Slackbot - Serverless application for managing daily standups
+
+# Global settings for all functions
+Globals:
+  Function:
+    Timeout: 30
+    Runtime: provided.al2
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DYNAMODB_TABLE: !Ref StandupTable
+        CONFIG_PATH: ./config.yaml
+    Tracing: Active
+
+Parameters:
+  SlackBotToken:
+    Type: String
+    Description: Slack Bot User OAuth Token
+    NoEcho: true
+
+  SlackSigningSecret:
+    Type: String
+    Description: Slack Signing Secret for request verification
+    NoEcho: true
+
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment environment
+
+Resources:
+  # DynamoDB Table
+  StandupTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-standup-table"
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # SQS Queue for async processing
+  ProcessorQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-processor-queue"
+      VisibilityTimeout: 180
+      MessageRetentionPeriod: 1209600  # 14 days
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ProcessorDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  ProcessorDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-processor-dlq"
+      MessageRetentionPeriod: 1209600  # 14 days
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # API Gateway for Slack webhooks
+  SlackApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${AWS::StackName}-slack-api"
+      StageName: !Ref Environment
+      TracingEnabled: true
+      MethodSettings:
+        - ResourcePath: "/*"
+          HttpMethod: "*"
+          ThrottlingBurstLimit: 100
+          ThrottlingRateLimit: 50
+      Tags:
+        Environment: !Ref Environment
+
+  # Lambda Functions
+  WebhookFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-webhook"
+      CodeUri: cmd/webhook/
+      Handler: bootstrap
+      MemorySize: 256
+      Environment:
+        Variables:
+          SLACK_BOT_TOKEN: !Ref SlackBotToken
+          SLACK_SIGNING_SECRET: !Ref SlackSigningSecret
+      Events:
+        SlackWebhook:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SlackApi
+            Path: /slack/events
+            Method: POST
+        SlackInteractive:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SlackApi
+            Path: /slack/interactive
+            Method: POST
+        SlackCommands:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SlackApi
+            Path: /slack/commands
+            Method: POST
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StandupTable
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt ProcessorQueue.QueueName
+      Tags:
+        Environment: !Ref Environment
+    Metadata:
+      BuildMethod: makefile
+
+  SchedulerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-scheduler"
+      CodeUri: cmd/scheduler/
+      Handler: bootstrap
+      MemorySize: 512
+      Timeout: 60
+      Environment:
+        Variables:
+          SLACK_BOT_TOKEN: !Ref SlackBotToken
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+            Name: !Sub "${AWS::StackName}-scheduler-trigger"
+            Description: Triggers scheduler every minute
+            Enabled: true
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StandupTable
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt ProcessorQueue.QueueName
+      Tags:
+        Environment: !Ref Environment
+    Metadata:
+      BuildMethod: makefile
+
+  ProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-processor"
+      CodeUri: cmd/processor/
+      Handler: bootstrap
+      MemorySize: 256
+      Timeout: 120
+      ReservedConcurrentExecutions: 5
+      Environment:
+        Variables:
+          SLACK_BOT_TOKEN: !Ref SlackBotToken
+      Events:
+        ProcessorQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt ProcessorQueue.Arn
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 5
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StandupTable
+      Tags:
+        Environment: !Ref Environment
+    Metadata:
+      BuildMethod: makefile
+
+  # CloudWatch Log Groups
+  WebhookLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${WebhookFunction}"
+      RetentionInDays: 30
+
+  SchedulerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${SchedulerFunction}"
+      RetentionInDays: 30
+
+  ProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProcessorFunction}"
+      RetentionInDays: 30
+
+  # Alarms
+  WebhookErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-webhook-errors"
+      AlarmDescription: Webhook function error rate too high
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref WebhookFunction
+      TreatMissingData: notBreaching
+
+  ProcessorDLQAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "${AWS::StackName}-dlq-messages"
+      AlarmDescription: Messages in processor DLQ
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt ProcessorDLQ.QueueName
+      TreatMissingData: notBreaching
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${SlackApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+
+  WebhookUrl:
+    Description: Webhook URL for Slack event subscriptions
+    Value: !Sub "https://${SlackApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/slack/events"
+
+  InteractiveUrl:
+    Description: Interactive components URL for Slack
+    Value: !Sub "https://${SlackApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/slack/interactive"
+
+  SlashCommandUrl:
+    Description: Slash commands URL for Slack
+    Value: !Sub "https://${SlackApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}/slack/commands"
+
+  DynamoDBTable:
+    Description: DynamoDB table name
+    Value: !Ref StandupTable
+
+  ProcessorQueueUrl:
+    Description: SQS queue URL for async processing
+    Value: !Ref ProcessorQueue
