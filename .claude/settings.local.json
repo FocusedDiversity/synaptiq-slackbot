@@ -4,7 +4,13 @@
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
       "Bash(git add:*)",
-      "Bash(detect-secrets scan:*)"
+      "Bash(detect-secrets scan:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(go mod init:*)",
+      "Bash(go get:*)",
+      "Bash(go test:*)",
+      "Bash(go mod:*)"
     ],
     "deny": []
   }
