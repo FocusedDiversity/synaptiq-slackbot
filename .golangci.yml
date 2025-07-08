@@ -129,7 +129,6 @@ linters-settings:
 
   nolintlint:
     allow-unused: false
-    allow-leading-space: false
     require-explanation: true
     require-specific: true
 
@@ -139,7 +138,6 @@ linters-settings:
     for-loops: true
 
   revive:
-    ignoreGeneratedHeader: true
     severity: warning
     rules:
       - name: blank-imports
