@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/synaptiq/standup-bot/internal/store"
 )
 
 // MockDynamoDBClient is a mock implementation of the DynamoDB client
@@ -51,7 +53,7 @@ func (m *MockDynamoDBClient) Query(ctx context.Context, params *dynamodb.QueryIn
 
 func TestSaveWorkspaceConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewStore(mockClient, "test-table", 30)
+	s := NewStore(mockClient, "test-table", 30)
 
 	config := &store.WorkspaceConfig{
 		TeamID:      "T123456",
@@ -68,14 +70,14 @@ func TestSaveWorkspaceConfig(t *testing.T) {
 			input.Item["SK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T123456"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
-	err := store.SaveWorkspaceConfig(context.Background(), config)
+	err := s.SaveWorkspaceConfig(context.Background(), config)
 	assert.NoError(t, err)
 	mockClient.AssertExpectations(t)
 }
 
 func TestGetWorkspaceConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewStore(mockClient, "test-table", 30)
+	s := NewStore(mockClient, "test-table", 30)
 
 	t.Run("found", func(t *testing.T) {
 		mockClient.On("GetItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.GetItemInput) bool {
@@ -89,7 +91,7 @@ func TestGetWorkspaceConfig(t *testing.T) {
 			},
 		}, nil).Once()
 
-		config, err := store.GetWorkspaceConfig(context.Background(), "T123456")
+		config, err := s.GetWorkspaceConfig(context.Background(), "T123456")
 		assert.NoError(t, err)
 		assert.Equal(t, "T123456", config.TeamID)
 		assert.Equal(t, "Test Team", config.TeamName)
@@ -98,14 +100,14 @@ func TestGetWorkspaceConfig(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		mockClient.On("GetItem", mock.Anything, mock.Anything).Return(&dynamodb.GetItemOutput{}, nil).Once()
 
-		_, err := store.GetWorkspaceConfig(context.Background(), "T999999")
+		_, err := s.GetWorkspaceConfig(context.Background(), "T999999")
 		assert.Equal(t, store.ErrNotFound, err)
 	})
 }
 
 func TestSaveChannelConfig(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewStore(mockClient, "test-table", 30)
+	s := NewStore(mockClient, "test-table", 30)
 
 	config := &store.ChannelConfig{
 		TeamID:      "T123456",
@@ -130,14 +132,14 @@ func TestSaveChannelConfig(t *testing.T) {
 			input.Item["GSI1PK"].(*types.AttributeValueMemberS).Value == "ACTIVE#true"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
-	err := store.SaveChannelConfig(context.Background(), config)
+	err := s.SaveChannelConfig(context.Background(), config)
 	assert.NoError(t, err)
 	mockClient.AssertExpectations(t)
 }
 
 func TestCreateSession(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewStore(mockClient, "test-table", 30)
+	s := NewStore(mockClient, "test-table", 30)
 
 	session := &store.Session{
 		SessionID:     "sess-123",
@@ -156,7 +158,7 @@ func TestCreateSession(t *testing.T) {
 				*input.ConditionExpression == "attribute_not_exists(PK)"
 		})).Return(&dynamodb.PutItemOutput{}, nil).Once()
 
-		err := store.CreateSession(context.Background(), session)
+		err := s.CreateSession(context.Background(), session)
 		assert.NoError(t, err)
 	})
 
@@ -165,14 +167,14 @@ func TestCreateSession(t *testing.T) {
 			Message: aws.String("The conditional request failed"),
 		}).Once()
 
-		err := store.CreateSession(context.Background(), session)
+		err := s.CreateSession(context.Background(), session)
 		assert.Equal(t, store.ErrAlreadyExists, err)
 	})
 }
 
 func TestSaveUserResponse(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := NewStore(mockClient, "test-table", 30)
+	s := NewStore(mockClient, "test-table", 30)
 
 	response := &store.UserResponse{
 		SessionID: "sess-123",
@@ -194,14 +196,14 @@ func TestSaveUserResponse(t *testing.T) {
 			input.Item["SK"].(*types.AttributeValueMemberS).Value == "USER#U123456"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
-	err := store.SaveUserResponse(context.Background(), response)
+	err := s.SaveUserResponse(context.Background(), response)
 	assert.NoError(t, err)
 	mockClient.AssertExpectations(t)
 }
 
 func TestGetUsersWithoutResponse(t *testing.T) {
 	mockClient := new(MockDynamoDBClient)
-	store := &Store{
+	s := &Store{
 		client:    mockClient,
 		tableName: "test-table",
 		ttlDays:   30,
@@ -220,7 +222,7 @@ func TestGetUsersWithoutResponse(t *testing.T) {
 	}, nil)
 
 	userIDs := []string{"U123", "U456", "U789", "U000"}
-	missingUsers, err := store.GetUsersWithoutResponse(context.Background(), "C123456", "2024-01-15", userIDs)
+	missingUsers, err := s.GetUsersWithoutResponse(context.Background(), "C123456", "2024-01-15", userIDs)
 
 	assert.NoError(t, err)
 	assert.ElementsMatch(t, []string{"U789", "U000"}, missingUsers)
@@ -286,17 +288,17 @@ func TestKeyGeneration(t *testing.T) {
 }
 
 func TestCalculateTTL(t *testing.T) {
-	store := &Store{ttlDays: 30}
+	s := &Store{ttlDays: 30}
 	baseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 
-	ttl := store.calculateTTL(baseTime)
+	ttl := s.calculateTTL(baseTime)
 	assert.NotNil(t, ttl)
 
 	expectedTTL := baseTime.AddDate(0, 0, 30).Unix()
 	assert.Equal(t, expectedTTL, *ttl)
 
 	// Test with zero TTL days
-	store.ttlDays = 0
-	ttl = store.calculateTTL(baseTime)
+	s.ttlDays = 0
+	ttl = s.calculateTTL(baseTime)
 	assert.Nil(t, ttl)
 }

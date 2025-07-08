@@ -17,13 +17,13 @@ import (
 
 // Store implements the Store interface using DynamoDB.
 type Store struct {
-	client    *dynamodb.Client
+	client    Client
 	tableName string
 	ttlDays   int // TTL for old records in days
 }
 
 // NewStore creates a new DynamoDB store.
-func NewStore(client *dynamodb.Client, tableName string, ttlDays int) store.Store {
+func NewStore(client Client, tableName string, ttlDays int) store.Store {
 	return &Store{
 		client:    client,
 		tableName: tableName,

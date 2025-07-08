@@ -26,7 +26,8 @@
       "Bash(./scripts/setup-hooks.sh:*)",
       "Bash(./scripts/fix-all-lint.sh:*)",
       "Bash(golangci-lint run:*)",
-      "Bash(go doc:*)"
+      "Bash(go doc:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
