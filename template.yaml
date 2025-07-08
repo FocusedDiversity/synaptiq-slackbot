@@ -152,7 +152,7 @@ Resources:
       Tags:
         Environment: !Ref Environment
     Metadata:
-      BuildMethod: makefile
+      BuildMethod: go1.x
 
   SchedulerFunction:
     Type: AWS::Serverless::Function
@@ -181,7 +181,7 @@ Resources:
       Tags:
         Environment: !Ref Environment
     Metadata:
-      BuildMethod: makefile
+      BuildMethod: go1.x
 
   ProcessorFunction:
     Type: AWS::Serverless::Function
@@ -208,7 +208,7 @@ Resources:
       Tags:
         Environment: !Ref Environment
     Metadata:
-      BuildMethod: makefile
+      BuildMethod: go1.x
 
   # CloudWatch Log Groups
   WebhookLogGroup:
