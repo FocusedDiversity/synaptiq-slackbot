@@ -36,7 +36,8 @@
       "Bash(git commit:*)",
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
-      "Bash(sam build:*)"
+      "Bash(sam build:*)",
+      "Bash(gh api:*)"
     ],
     "deny": []
   }
