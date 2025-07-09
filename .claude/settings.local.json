@@ -35,7 +35,8 @@
       "Bash(./scripts/check-licenses.sh:*)",
       "Bash(git commit:*)",
       "Bash(gh run list:*)",
-      "Bash(gh run view:*)"
+      "Bash(gh run view:*)",
+      "Bash(sam build:*)"
     ],
     "deny": []
   }
