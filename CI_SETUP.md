@@ -33,8 +33,9 @@ A lightweight CI script that runs only critical checks:
 - Format checking
 - Import organization
 - Basic tests
-- Security scan
+- Security scan (gosec)
 - SAM validation
+- CodeQL security analysis (if installed)
 
 This is used by the pre-commit hook for speed.
 
@@ -79,6 +80,26 @@ Once installed, the hooks will:
    - Runs automatically before pushing
    - Executes full CI suite including linting
    - Can be skipped with `SKIP_CI_CHECKS=1 git push`
+
+## CodeQL Integration
+
+The project includes CodeQL security analysis in both CI and pre-commit hooks:
+
+### Local Setup
+1. Install CodeQL via Homebrew: `brew install codeql`
+2. CodeQL checks run automatically in pre-commit if installed
+3. First run creates a database (may take ~30 seconds)
+4. Subsequent runs are faster as the database is reused
+
+### Pre-commit Hook
+- Runs basic security analysis locally
+- Non-blocking if CodeQL is not installed
+- Results are cleaned up automatically
+
+### GitHub Actions
+- Full `security-and-quality` query suite runs in CI
+- Results uploaded to GitHub Security tab
+- Includes checks from gosec, Trivy, and Checkov
 
 ## GitHub Actions Integration
 

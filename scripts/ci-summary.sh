@@ -80,12 +80,15 @@ if command -v codeql &> /dev/null; then
     fi
     
     if [ -d ".codeql-db" ]; then
-        # Run security-and-quality queries like in GitHub Actions
-        if codeql database analyze .codeql-db --format=sarif-latest --output=/dev/null \
-            codeql/go-queries:codeql-suites/go-security-and-quality.qls 2>&1 | grep -q "error\|warning"; then
-            echo "⚠️  CodeQL found potential issues (run full scan in CI)"
+        # Run security queries (simplified for local use)
+        # Full security-and-quality scan happens in GitHub Actions
+        if codeql database analyze .codeql-db --format=sarif-latest --output=.codeql-results.sarif \
+            --download 2>&1 | grep -q -E "(error|warning|found [1-9])"; then
+            echo "⚠️  CodeQL found potential issues (check .codeql-results.sarif)"
+            rm -f .codeql-results.sarif
         else
             echo "✅ No critical CodeQL issues"
+            rm -f .codeql-results.sarif
         fi
     else
         echo "⚠️  CodeQL database creation failed (check will run in CI)"
