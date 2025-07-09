@@ -79,7 +79,7 @@ func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, us
 	}
 
 	if !channel.IsEnabled() {
-		return fmt.Errorf("standups not enabled for channel %s", channelID)
+		return fmt.Errorf("standups not enabled for channel %s", lambdautil.SanitizeLogValue(channelID))
 	}
 
 	// Ensure session exists
@@ -276,7 +276,7 @@ func (s *Service) postResponseToChannel(ctx context.Context, submission *Submiss
 
 	// Build message
 	builder := slack.NewMessageBuilder()
-	builder.AddSection(fmt.Sprintf("*Standup Update from <@%s>*", submission.UserID))
+	builder.AddSection(fmt.Sprintf("*Standup Update from <@%s>*", lambdautil.SanitizeLogValue(submission.UserID)))
 
 	questions := channel.Questions()
 	for i, question := range questions {
