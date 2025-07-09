@@ -37,7 +37,9 @@
       "Bash(gh run list:*)",
       "Bash(gh run view:*)",
       "Bash(sam build:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(gh repo view:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
+	"unicode"
 )
 
 // defaultLogger is a simple logger implementation
@@ -37,10 +39,35 @@ func (l *defaultLogger) log(level string, ctx context.Context, msg string, field
 	// Format fields
 	fieldStr := ""
 	for _, f := range fields {
-		fieldStr += fmt.Sprintf(" %s=%v", f.Key, f.Value)
+		// Sanitize field values to prevent log injection
+		sanitizedValue := sanitizeForLog(fmt.Sprintf("%v", f.Value))
+		fieldStr += fmt.Sprintf(" %s=%s", f.Key, sanitizedValue)
 	}
 
 	log.Printf("[%s] %s%s", level, msg, fieldStr)
+}
+
+// sanitizeForLog removes control characters and newlines from log values
+func sanitizeForLog(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Remove newlines, carriage returns, and other control characters
+	sanitized := strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) || r == '\n' || r == '\r' {
+			return ' '
+		}
+		return r
+	}, value)
+
+	// Trim to reasonable length
+	const maxLength = 200
+	if len(sanitized) > maxLength {
+		sanitized = sanitized[:maxLength] + "..."
+	}
+
+	return strings.TrimSpace(sanitized)
 }
 
 // noopTracer is a no-op tracer implementation
