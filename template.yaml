@@ -130,15 +130,12 @@ Resources:
   # API Gateway for Slack webhooks
   SlackApi:
     Type: AWS::Serverless::Api
-    Metadata:
-      checkov:
-        skip:
-          - id: CKV_AWS_120
-            comment: "API Gateway caching is already enabled via MethodSettings but Checkov doesn't detect it correctly for SAM resources"
     Properties:
       Name: !Sub "${AWS::StackName}-slack-api"
       StageName: !Ref Environment
       TracingEnabled: true
+      CacheClusterEnabled: true
+      CacheClusterSize: "0.5"
       AccessLogSetting:
         DestinationArn: !GetAtt ApiLogGroup.Arn
         Format: '$context.requestId $context.error.message $context.error.messageString $context.extendedRequestId $context.identity.sourceIp $context.identity.userAgent $context.integration.error $context.integration.integrationStatus $context.integration.latency $context.integration.requestId $context.integration.status $context.path $context.requestTime $context.responseLatency $context.responseLength $context.stage $context.status'
