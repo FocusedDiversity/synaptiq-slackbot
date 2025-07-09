@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    # checkov:skip=CKV_GHA_7:Workflow dispatch inputs are restricted to predefined choices (staging/production) which is safe
     inputs:
       environment:
         description: 'Environment to deploy to'

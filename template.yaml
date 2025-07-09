@@ -130,6 +130,11 @@ Resources:
   # API Gateway for Slack webhooks
   SlackApi:
     Type: AWS::Serverless::Api
+    Metadata:
+      checkov:
+        skip:
+          - id: CKV_AWS_120
+            comment: "API Gateway caching is already enabled via MethodSettings but Checkov doesn't detect it correctly for SAM resources"
     Properties:
       Name: !Sub "${AWS::StackName}-slack-api"
       StageName: !Ref Environment
@@ -203,6 +208,10 @@ Resources:
         Environment: !Ref Environment
     Metadata:
       BuildMethod: go1.x
+      checkov:
+        skip:
+          - id: CKV_AWS_117
+            comment: "VPC not required for Slack webhook - only needs outbound internet access"
 
   SchedulerFunction:
     Type: AWS::Serverless::Function
@@ -239,6 +248,10 @@ Resources:
         Environment: !Ref Environment
     Metadata:
       BuildMethod: go1.x
+      checkov:
+        skip:
+          - id: CKV_AWS_117
+            comment: "VPC not required for scheduler - only needs outbound internet access to Slack API"
 
   ProcessorFunction:
     Type: AWS::Serverless::Function
@@ -272,6 +285,10 @@ Resources:
         Environment: !Ref Environment
     Metadata:
       BuildMethod: go1.x
+      checkov:
+        skip:
+          - id: CKV_AWS_117
+            comment: "VPC not required for processor - only needs outbound internet access to Slack API"
 
   # KMS Key for CloudWatch Logs
   LogsKmsKey:
