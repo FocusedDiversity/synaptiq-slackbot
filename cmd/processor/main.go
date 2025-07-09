@@ -63,8 +63,8 @@ func handler(ctx context.Context, event events.SQSEvent) error {
 		ctx := botCtx.WithRequestID(ctx, record.MessageId)
 
 		logger.Info(ctx, "Processing message",
-			botcontext.Field{Key: "message_id", Value: record.MessageId},
-			botcontext.Field{Key: "event_source", Value: record.EventSource},
+			botcontext.Field{Key: "message_id", Value: security.SanitizeLogValue(record.MessageId)},
+			botcontext.Field{Key: "event_source", Value: security.SanitizeLogValue(record.EventSource)},
 		)
 
 		// Start tracer

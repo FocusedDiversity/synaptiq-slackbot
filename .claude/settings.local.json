@@ -43,7 +43,11 @@
       "Bash(gh workflow view:*)",
       "Bash(gh workflow list:*)",
       "Bash(rg:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh run watch:*)",
+      "Bash(echo \"Run status: $?\")",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)"
     ],
     "deny": []
   }

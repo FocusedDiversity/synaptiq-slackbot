@@ -127,8 +127,8 @@ func handleSlashCommand(ctx context.Context, values url.Values) (events.APIGatew
 
 	logger := botCtx.Logger()
 	logger.Info(ctx, "Slash command received",
-		botcontext.Field{Key: "command", Value: cmd.Command},
-		botcontext.Field{Key: "text", Value: cmd.Text},
+		botcontext.Field{Key: "command", Value: security.SanitizeLogValue(cmd.Command)},
+		botcontext.Field{Key: "text", Value: security.SanitizeLogValue(cmd.Text)},
 	)
 
 	switch cmd.Command {
@@ -180,8 +180,8 @@ func handleInteraction(ctx context.Context, payloadStr string) (events.APIGatewa
 
 	logger := botCtx.Logger()
 	logger.Info(ctx, "Interaction received",
-		botcontext.Field{Key: "type", Value: payload.Type},
-		botcontext.Field{Key: "callback_id", Value: payload.CallbackID},
+		botcontext.Field{Key: "type", Value: security.SanitizeLogValue(string(payload.Type))},
+		botcontext.Field{Key: "callback_id", Value: security.SanitizeLogValue(payload.CallbackID)},
 	)
 
 	switch payload.Type {
@@ -287,7 +287,7 @@ func handleEventCallback(ctx context.Context, wrapper *slack.EventWrapper) (even
 
 	logger := botCtx.Logger()
 	logger.Info(ctx, "Event received",
-		botcontext.Field{Key: "event_type", Value: wrapper.Event.Type},
+		botcontext.Field{Key: "event_type", Value: security.SanitizeLogValue(wrapper.Event.Type)},
 	)
 
 	// Handle specific events
