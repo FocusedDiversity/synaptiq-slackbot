@@ -1,0 +1,29 @@
+Synaptiq Standup Bot
+Copyright 2025 Synaptiq
+
+This product includes software developed at Synaptiq.
+
+===========================================================================
+Third-party dependencies:
+===========================================================================
+
+This product includes the following third-party software:
+
+AWS SDK for Go v2
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Licensed under the Apache License, Version 2.0
+
+AWS Lambda Go
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+Licensed under the Apache License, Version 2.0
+
+Google UUID
+Copyright (c) 2009,2014 Google Inc. All rights reserved.
+Licensed under the BSD 3-Clause License
+
+Testify
+Copyright (c) 2012-2020 Mat Ryer, Tyler Bunnell and contributors.
+Licensed under the MIT License
+
+For complete license information, please see the LICENSE file in the root
+directory of this source tree.

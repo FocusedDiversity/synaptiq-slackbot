@@ -1,0 +1,40 @@
+version = 0.1
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "synaptiq-standup-bot"
+s3_bucket = ""  # SAM will create one if not specified
+s3_prefix = "synaptiq-standup-bot"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = """
+  Environment=dev
+"""
+
+[staging]
+[staging.deploy]
+[staging.deploy.parameters]
+stack_name = "synaptiq-standup-bot-staging"
+s3_bucket = ""
+s3_prefix = "synaptiq-standup-bot"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = """
+  Environment=staging
+"""
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "synaptiq-standup-bot-prod"
+s3_bucket = ""
+s3_prefix = "synaptiq-standup-bot"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = """
+  Environment=prod
+"""

@@ -1,0 +1,96 @@
+# Synaptiq Standup Bot Configuration
+# This is an example configuration file. Copy to config.yaml and update with your values.
+
+version: "1.0"
+
+# Bot authentication tokens
+bot:
+  token: "${SLACK_BOT_TOKEN}"      # Bot User OAuth Token (xoxb-...)
+  app_token: "${SLACK_APP_TOKEN}"  # App-Level Token for Socket Mode (xapp-...)
+
+# DynamoDB configuration
+database:
+  table_name: "standup-bot"
+  region: "us-east-1"
+
+# Channel configurations
+channels:
+  # Engineering team standup
+  - id: "C1234567890"              # Replace with your channel ID
+    name: "engineering-standup"
+    enabled: true
+
+    # Schedule configuration
+    schedule:
+      timezone: "America/New_York"
+      summary_time: "09:00"        # Time to post daily summary
+      reminder_times:              # Times to send reminders
+        - "08:30"
+        - "08:50"
+      active_days: ["Mon", "Tue", "Wed", "Thu", "Fri"]  # Weekdays only
+
+    # Team members required to submit updates
+    users:
+      - id: "U1234567890"          # Replace with actual user IDs
+        name: "alice"
+        timezone: "America/New_York"
+      - id: "U0987654321"
+        name: "bob"
+        timezone: "America/Chicago"
+      - id: "U1111111111"
+        name: "charlie"
+        timezone: "Europe/London"
+
+    # Message templates (supports Go template syntax)
+    templates:
+      reminder: "Hey {{.UserName}}! 👋 Don't forget to submit your standup update for #{{.ChannelName}}"
+      summary_header: "📊 Daily Standup Summary for {{.Date}}"
+      user_completed: "✅ {{.UserName}} - submitted at {{.Time}}"
+      user_missing: "❌ {{.UserName}} - No update"
+
+    # Standup questions
+    questions:
+      - "What did you work on yesterday?"
+      - "What are you working on today?"
+      - "Any blockers or concerns?"
+
+  # Product team standup (disabled example)
+  - id: "C0987654321"
+    name: "product-standup"
+    enabled: false                 # This channel is disabled
+
+    schedule:
+      timezone: "America/Los_Angeles"
+      summary_time: "09:30"
+      reminder_times:
+        - "09:00"
+        - "09:20"
+      active_days: ["Mon", "Tue", "Wed", "Thu", "Fri"]
+
+    users:
+      - id: "U2222222222"
+        name: "dana"
+        timezone: "America/Los_Angeles"
+      - id: "U3333333333"
+        name: "eve"
+        timezone: "America/Denver"
+
+    templates:
+      reminder: "🔔 {{.UserName}}, please submit your standup for #{{.ChannelName}}"
+      summary_header: "📋 Product Team Standup - {{.Date}}"
+      user_completed: "✓ {{.UserName}} ({{.Time}})"
+      user_missing: "⚠️ {{.UserName}} - Missing"
+
+    questions:
+      - "Yesterday's accomplishments?"
+      - "Today's priorities?"
+      - "Blockers?"
+      - "Customer feedback or insights?"
+
+# Feature flags
+features:
+  threading_enabled: true          # Post responses in threads
+  analytics_enabled: true          # Track usage analytics
+  vacation_mode: true              # Allow users to set vacation status
+  multi_workspace: false           # Multi-workspace support (future)
+  ai_summaries: false              # AI-powered summaries (future)

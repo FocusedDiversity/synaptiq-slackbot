@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "deepseek-v2:236b": {},
+        "deepseek-r1:70b": {},
+        "qwen2.5-coder:32b": {},
+        "llama4:16x17b": {}
+      }
+    }
+  }
+}
