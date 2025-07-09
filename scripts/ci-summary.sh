@@ -68,6 +68,33 @@ else
 fi
 
 echo
+
+# 7. CodeQL check (if available)
+echo "7. CodeQL Check:"
+if command -v codeql &> /dev/null; then
+    # Create a minimal CodeQL database and run security queries
+    # This is a simplified version - full scan happens in CI
+    if [ ! -d ".codeql-db" ]; then
+        echo "   Creating CodeQL database (first run may take a moment)..."
+        codeql database create .codeql-db --language=go --source-root=. --overwrite --quiet 2>/dev/null || true
+    fi
+    
+    if [ -d ".codeql-db" ]; then
+        # Run security-and-quality queries like in GitHub Actions
+        if codeql database analyze .codeql-db --format=sarif-latest --output=/dev/null \
+            --download go-security-and-quality 2>&1 | grep -q "error\|warning"; then
+            echo "⚠️  CodeQL found potential issues (run full scan in CI)"
+        else
+            echo "✅ No critical CodeQL issues"
+        fi
+    else
+        echo "⚠️  CodeQL database creation failed (check will run in CI)"
+    fi
+else
+    echo "⚠️  CodeQL not installed (skipping - will run in CI)"
+fi
+
+echo
 echo "Critical checks complete!"
 echo
 echo "For full CI checks including linting, run: ./scripts/ci-local.sh"

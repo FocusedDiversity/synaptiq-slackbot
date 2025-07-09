@@ -39,7 +39,11 @@
       "Bash(sam build:*)",
       "Bash(gh api:*)",
       "Bash(gh repo view:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(gh workflow view:*)",
+      "Bash(gh workflow list:*)",
+      "Bash(rg:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

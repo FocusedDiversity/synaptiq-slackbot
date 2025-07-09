@@ -56,7 +56,7 @@ func TestSaveWorkspaceConfig(t *testing.T) {
 	s := NewStore(mockClient, "test-table", 30)
 
 	config := &store.WorkspaceConfig{
-		TeamID:      "T123456",
+		TeamID:      "T1234567890",
 		TeamName:    "Test Team",
 		BotToken:    "xoxb-test-token",
 		AppToken:    "xapp-test-token",
@@ -66,8 +66,8 @@ func TestSaveWorkspaceConfig(t *testing.T) {
 
 	mockClient.On("PutItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.PutItemInput) bool {
 		return *input.TableName == "test-table" &&
-			input.Item["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T123456" &&
-			input.Item["SK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T123456"
+			input.Item["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T1234567890" &&
+			input.Item["SK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T1234567890"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
 	err := s.SaveWorkspaceConfig(context.Background(), config)
@@ -82,25 +82,25 @@ func TestGetWorkspaceConfig(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		mockClient.On("GetItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.GetItemInput) bool {
 			return *input.TableName == "test-table" &&
-				input.Key["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T123456"
+				input.Key["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T1234567890"
 		})).Return(&dynamodb.GetItemOutput{
 			Item: map[string]types.AttributeValue{
-				"team_id":   &types.AttributeValueMemberS{Value: "T123456"},
+				"team_id":   &types.AttributeValueMemberS{Value: "T1234567890"},
 				"team_name": &types.AttributeValueMemberS{Value: "Test Team"},
 				"bot_token": &types.AttributeValueMemberS{Value: "xoxb-test-token"},
 			},
 		}, nil).Once()
 
-		config, err := s.GetWorkspaceConfig(context.Background(), "T123456")
+		config, err := s.GetWorkspaceConfig(context.Background(), "T1234567890")
 		assert.NoError(t, err)
-		assert.Equal(t, "T123456", config.TeamID)
+		assert.Equal(t, "T1234567890", config.TeamID)
 		assert.Equal(t, "Test Team", config.TeamName)
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		mockClient.On("GetItem", mock.Anything, mock.Anything).Return(&dynamodb.GetItemOutput{}, nil).Once()
 
-		_, err := s.GetWorkspaceConfig(context.Background(), "T999999")
+		_, err := s.GetWorkspaceConfig(context.Background(), "T9999999999")
 		assert.Equal(t, store.ErrNotFound, err)
 	})
 }
@@ -110,8 +110,8 @@ func TestSaveChannelConfig(t *testing.T) {
 	s := NewStore(mockClient, "test-table", 30)
 
 	config := &store.ChannelConfig{
-		TeamID:      "T123456",
-		ChannelID:   "C123456",
+		TeamID:      "T1234567890",
+		ChannelID:   "C1234567890",
 		ChannelName: "engineering-standup",
 		Enabled:     true,
 		Schedule: store.ScheduleConfig{
@@ -120,15 +120,15 @@ func TestSaveChannelConfig(t *testing.T) {
 			ReminderTimes: []string{"08:30", "08:50"},
 			ActiveDays:    []string{"Mon", "Tue", "Wed", "Thu", "Fri"},
 		},
-		Users:     []string{"U123", "U456"},
+		Users:     []string{"U1234567890", "U0987654321"},
 		Questions: []string{"What did you do?", "What will you do?"},
 		UpdatedAt: time.Now(),
 	}
 
 	mockClient.On("PutItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.PutItemInput) bool {
 		return *input.TableName == "test-table" &&
-			input.Item["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T123456" &&
-			input.Item["SK"].(*types.AttributeValueMemberS).Value == "CONFIG#C123456" &&
+			input.Item["PK"].(*types.AttributeValueMemberS).Value == "WORKSPACE#T1234567890" &&
+			input.Item["SK"].(*types.AttributeValueMemberS).Value == "CONFIG#C1234567890" &&
 			input.Item["GSI1PK"].(*types.AttributeValueMemberS).Value == "ACTIVE#true"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
@@ -143,7 +143,7 @@ func TestCreateSession(t *testing.T) {
 
 	session := &store.Session{
 		SessionID:     "sess-123",
-		ChannelID:     "C123456",
+		ChannelID:     "C1234567890",
 		Date:          "2024-01-15",
 		Status:        store.SessionPending,
 		SummaryPosted: false,
@@ -178,9 +178,9 @@ func TestSaveUserResponse(t *testing.T) {
 
 	response := &store.UserResponse{
 		SessionID: "sess-123",
-		ChannelID: "C123456",
+		ChannelID: "C1234567890",
 		Date:      "2024-01-15",
-		UserID:    "U123456",
+		UserID:    "U1234567890",
 		UserName:  "alice",
 		Responses: map[string]string{
 			"q1": "Worked on feature X",
@@ -192,8 +192,8 @@ func TestSaveUserResponse(t *testing.T) {
 
 	mockClient.On("PutItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.PutItemInput) bool {
 		return *input.TableName == "test-table" &&
-			input.Item["PK"].(*types.AttributeValueMemberS).Value == "SESSION#C123456#2024-01-15" &&
-			input.Item["SK"].(*types.AttributeValueMemberS).Value == "USER#U123456"
+			input.Item["PK"].(*types.AttributeValueMemberS).Value == "SESSION#C1234567890#2024-01-15" &&
+			input.Item["SK"].(*types.AttributeValueMemberS).Value == "USER#U1234567890"
 	})).Return(&dynamodb.PutItemOutput{}, nil)
 
 	err := s.SaveUserResponse(context.Background(), response)
@@ -213,19 +213,19 @@ func TestGetUsersWithoutResponse(t *testing.T) {
 	mockClient.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{
 		Items: []map[string]types.AttributeValue{
 			{
-				"user_id": &types.AttributeValueMemberS{Value: "U123"},
+				"user_id": &types.AttributeValueMemberS{Value: "U1234567890"},
 			},
 			{
-				"user_id": &types.AttributeValueMemberS{Value: "U456"},
+				"user_id": &types.AttributeValueMemberS{Value: "U0987654321"},
 			},
 		},
 	}, nil)
 
-	userIDs := []string{"U123", "U456", "U789", "U000"}
-	missingUsers, err := s.GetUsersWithoutResponse(context.Background(), "C123456", "2024-01-15", userIDs)
+	userIDs := []string{"U1234567890", "U0987654321", "U1111111111", "U2222222222"}
+	missingUsers, err := s.GetUsersWithoutResponse(context.Background(), "C1234567890", "2024-01-15", userIDs)
 
 	assert.NoError(t, err)
-	assert.ElementsMatch(t, []string{"U789", "U000"}, missingUsers)
+	assert.ElementsMatch(t, []string{"U1111111111", "U2222222222"}, missingUsers)
 	mockClient.AssertExpectations(t)
 }
 

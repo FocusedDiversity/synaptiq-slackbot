@@ -286,15 +286,15 @@ func TestBotContextRequestScoping(t *testing.T) {
 	}
 
 	// Test user ID
-	ctx = botCtx.WithUserID(ctx, "U123456")
-	if botCtx.UserID(ctx) != "U123456" {
-		t.Errorf("Expected user ID U123456, got %s", botCtx.UserID(ctx))
+	ctx = botCtx.WithUserID(ctx, "U1234567890")
+	if botCtx.UserID(ctx) != "U1234567890" {
+		t.Errorf("Expected user ID U1234567890, got %s", botCtx.UserID(ctx))
 	}
 
 	// Test channel ID
-	ctx = botCtx.WithChannelID(ctx, "C789012")
-	if botCtx.ChannelID(ctx) != "C789012" {
-		t.Errorf("Expected channel ID C789012, got %s", botCtx.ChannelID(ctx))
+	ctx = botCtx.WithChannelID(ctx, "C7890123456")
+	if botCtx.ChannelID(ctx) != "C7890123456" {
+		t.Errorf("Expected channel ID C7890123456, got %s", botCtx.ChannelID(ctx))
 	}
 
 	// Test empty context

@@ -51,3 +51,6 @@ config.yaml
 
 # Generated files
 licenses.txt
+
+# CodeQL database
+.codeql-db/
