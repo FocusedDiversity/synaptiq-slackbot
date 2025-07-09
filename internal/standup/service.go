@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	botcontext "github.com/synaptiq/standup-bot/context"
+	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/store"
 )
@@ -74,7 +75,7 @@ func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, us
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
 	if !found {
-		return fmt.Errorf("channel %s not configured", channelID)
+		return fmt.Errorf("channel not configured: %s", lambdautil.SanitizeLogValue(channelID))
 	}
 
 	if !channel.IsEnabled() {
@@ -210,7 +211,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
 	if !found {
-		return fmt.Errorf("channel %s not configured", channelID)
+		return fmt.Errorf("channel not configured: %s", lambdautil.SanitizeLogValue(channelID))
 	}
 
 	// Build summary

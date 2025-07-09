@@ -139,9 +139,10 @@ func processSendWelcome(ctx context.Context, task TaskMessage) error {
 	}
 
 	// Build welcome message
+	channelRef := fmt.Sprintf("<#%s>", lambdautil.SanitizeLogValue(channelID))
 	blocks := slack.NewMessageBuilder().
 		AddHeader("Welcome to Daily Standups! 👋").
-		AddSection(fmt.Sprintf("You've been added to the daily standup for <#%s>.", channelID)).
+		AddSection(fmt.Sprintf("You've been added to the daily standup for %s.", channelRef)).
 		AddSection("*How it works:*\n" +
 			"• You'll receive a DM reminder each morning\n" +
 			"• Use `/standup` to submit your update\n" +
