@@ -125,6 +125,9 @@ if command -v brew &> /dev/null; then
 
     brew list act &>/dev/null || brew install act
     echo -e "${GREEN}✓ act (run GitHub Actions locally)${NC}"
+
+    brew list codeql &>/dev/null || brew install codeql
+    echo -e "${GREEN}✓ codeql (semantic code analysis)${NC}"
 else
     echo -e "${YELLOW}⚠️  Homebrew not found. Please install AWS CLI, SAM CLI, and other tools manually.${NC}"
 fi

@@ -496,7 +496,8 @@ func (c *client) callAPI(ctx context.Context, method string, params interface{})
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, security.SanitizeLogValue(string(respBody)))
+		body := security.SanitizeLogValue(string(respBody))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
 	}
 
 	return respBody, nil
@@ -534,7 +535,8 @@ func (c *client) callAPIWithParams(ctx context.Context, method string, params ma
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, security.SanitizeLogValue(string(respBody)))
+		body := security.SanitizeLogValue(string(respBody))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, body)
 	}
 
 	return respBody, nil

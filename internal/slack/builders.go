@@ -242,7 +242,8 @@ func BuildSummaryMessage(date, headerTemplate string, responses []*UserResponseS
 
 	for _, resp := range responses {
 		if resp.Submitted {
-			submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", security.SanitizeLogValue(resp.UserID), resp.Time))
+			userID := security.SanitizeLogValue(resp.UserID)
+			submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", userID, resp.Time))
 		} else {
 			missing = append(missing, fmt.Sprintf("• <@%s>", security.SanitizeLogValue(resp.UserID)))
 		}

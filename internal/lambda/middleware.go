@@ -123,7 +123,8 @@ func WithRecovery(botCtx botcontext.BotContext) Middleware {
 			defer func() {
 				if r := recover(); r != nil {
 					logger := botCtx.Logger()
-					logger.Error(ctx, "Panic recovered", fmt.Errorf("%v", security.SanitizeLogValue(fmt.Sprintf("%v", r))),
+					panicMsg := security.SanitizeLogValue(fmt.Sprintf("%v", r))
+					logger.Error(ctx, "Panic recovered", fmt.Errorf("%v", panicMsg),
 						botcontext.Field{Key: "stack", Value: security.SanitizeLogValue(string(debug.Stack()))},
 					)
 					response = InternalServerError("Internal server error")
