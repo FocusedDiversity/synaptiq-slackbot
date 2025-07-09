@@ -50,7 +50,16 @@
       "Bash(gh pr checks:*)",
       "Bash(SKIP_CI_CHECKS=1 git push origin feat/initial-modules)",
       "Bash(pre-commit run:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(codeql database analyze:*)",
+      "Bash(codeql resolve:*)",
+      "Bash(timeout:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(curl:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rev-list:*)"
     ],
     "deny": []
   }
