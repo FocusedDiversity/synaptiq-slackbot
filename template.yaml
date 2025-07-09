@@ -278,6 +278,7 @@ Resources:
     Type: AWS::KMS::Key
     Properties:
       Description: !Sub "KMS key for ${AWS::StackName} CloudWatch Logs"
+      EnableKeyRotation: true
       KeyPolicy:
         Version: '2012-10-17'
         Statement:
