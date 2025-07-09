@@ -118,7 +118,7 @@ jobs:
           path: unit-tests.xml
 
       - name: Test Report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: Go Tests (${{ matrix.go-version }})
