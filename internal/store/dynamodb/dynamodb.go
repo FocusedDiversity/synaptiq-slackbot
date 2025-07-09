@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/synaptiq/standup-bot/internal/store"
+	"github.com/synaptiq/standup-bot/internal/validation"
 )
 
 // Store implements the Store interface using DynamoDB.
@@ -63,6 +64,11 @@ func (s *Store) calculateTTL(baseTime time.Time) *int64 {
 
 // SaveWorkspaceConfig saves workspace configuration.
 func (s *Store) SaveWorkspaceConfig(ctx context.Context, config *store.WorkspaceConfig) error {
+	// Validate team ID
+	if err := validation.ValidateTeamID(config.TeamID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid team ID", Err: err}
+	}
+
 	pk, sk := workspaceKey(config.TeamID)
 
 	item := map[string]interface{}{
@@ -94,6 +100,11 @@ func (s *Store) SaveWorkspaceConfig(ctx context.Context, config *store.Workspace
 
 // GetWorkspaceConfig retrieves workspace configuration.
 func (s *Store) GetWorkspaceConfig(ctx context.Context, teamID string) (*store.WorkspaceConfig, error) {
+	// Validate team ID
+	if err := validation.ValidateTeamID(teamID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid team ID", Err: err}
+	}
+
 	pk, sk := workspaceKey(teamID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -121,6 +132,14 @@ func (s *Store) GetWorkspaceConfig(ctx context.Context, teamID string) (*store.W
 
 // SaveChannelConfig saves channel configuration.
 func (s *Store) SaveChannelConfig(ctx context.Context, config *store.ChannelConfig) error {
+	// Validate IDs
+	if err := validation.ValidateTeamID(config.TeamID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid team ID", Err: err}
+	}
+	if err := validation.ValidateChannelID(config.ChannelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+
 	pk, sk := channelConfigKey(config.TeamID, config.ChannelID)
 
 	item := map[string]interface{}{
@@ -157,7 +176,17 @@ func (s *Store) SaveChannelConfig(ctx context.Context, config *store.ChannelConf
 }
 
 // GetChannelConfig retrieves channel configuration.
+//
+//nolint:dupl // Similar pattern to GetSession but for different entity types
 func (s *Store) GetChannelConfig(ctx context.Context, teamID, channelID string) (*store.ChannelConfig, error) {
+	// Validate IDs
+	if err := validation.ValidateTeamID(teamID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid team ID", Err: err}
+	}
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+
 	pk, sk := channelConfigKey(teamID, channelID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -185,6 +214,11 @@ func (s *Store) GetChannelConfig(ctx context.Context, teamID, channelID string) 
 
 // ListChannelConfigs lists all channel configurations for a workspace.
 func (s *Store) ListChannelConfigs(ctx context.Context, teamID string) ([]*store.ChannelConfig, error) {
+	// Validate team ID
+	if err := validation.ValidateTeamID(teamID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid team ID", Err: err}
+	}
+
 	pk := fmt.Sprintf("WORKSPACE#%s", teamID)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk)).And(
@@ -260,6 +294,14 @@ func (s *Store) ListActiveChannelConfigs(ctx context.Context) ([]*store.ChannelC
 
 // CreateSession creates a new standup session.
 func (s *Store) CreateSession(ctx context.Context, session *store.Session) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(session.ChannelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(session.Date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk, sk := sessionKey(session.ChannelID, session.Date)
 
 	item := map[string]interface{}{
@@ -297,7 +339,17 @@ func (s *Store) CreateSession(ctx context.Context, session *store.Session) error
 }
 
 // GetSession retrieves a standup session.
+//
+//nolint:dupl // Similar pattern to GetChannelConfig but for different entity types
 func (s *Store) GetSession(ctx context.Context, channelID, date string) (*store.Session, error) {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk, sk := sessionKey(channelID, date)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -329,6 +381,14 @@ func (s *Store) UpdateSessionStatus(
 	channelID, date string,
 	status store.SessionStatus,
 ) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk, sk := sessionKey(channelID, date)
 
 	update := expression.Set(expression.Name("status"), expression.Value(status))
@@ -360,6 +420,14 @@ func (s *Store) UpdateSessionStatus(
 
 // MarkSummaryPosted marks a session summary as posted.
 func (s *Store) MarkSummaryPosted(ctx context.Context, channelID, date string) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk, sk := sessionKey(channelID, date)
 
 	update := expression.Set(expression.Name("summary_posted"), expression.Value(true))
@@ -387,6 +455,17 @@ func (s *Store) MarkSummaryPosted(ctx context.Context, channelID, date string) e
 
 // SaveUserResponse saves a user's standup response.
 func (s *Store) SaveUserResponse(ctx context.Context, response *store.UserResponse) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(response.ChannelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(response.Date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+	if err := validation.ValidateUserID(response.UserID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid user ID", Err: err}
+	}
+
 	pk, sk := userResponseKey(response.ChannelID, response.Date, response.UserID)
 
 	item := map[string]interface{}{
@@ -424,6 +503,17 @@ func (s *Store) GetUserResponse(
 	ctx context.Context,
 	channelID, date, userID string,
 ) (*store.UserResponse, error) {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+	if err := validation.ValidateUserID(userID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid user ID", Err: err}
+	}
+
 	pk, sk := userResponseKey(channelID, date, userID)
 
 	result, err := s.client.GetItem(ctx, &dynamodb.GetItemInput{
@@ -451,6 +541,14 @@ func (s *Store) GetUserResponse(
 
 // ListUserResponses lists all user responses for a session.
 func (s *Store) ListUserResponses(ctx context.Context, channelID, date string) ([]*store.UserResponse, error) {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk := fmt.Sprintf("SESSION#%s#%s", channelID, date)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk)).And(
@@ -490,6 +588,17 @@ func (s *Store) ListUserResponses(ctx context.Context, channelID, date string) (
 
 // IncrementReminderCount increments the reminder count for a user.
 func (s *Store) IncrementReminderCount(ctx context.Context, channelID, date, userID string) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+	if err := validation.ValidateUserID(userID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid user ID", Err: err}
+	}
+
 	pk, sk := userResponseKey(channelID, date, userID)
 
 	update := expression.Add(expression.Name("reminder_count"), expression.Value(1))
@@ -517,6 +626,17 @@ func (s *Store) IncrementReminderCount(ctx context.Context, channelID, date, use
 
 // SaveReminder saves a reminder record.
 func (s *Store) SaveReminder(ctx context.Context, reminder *store.Reminder) error {
+	// Validate inputs
+	if err := validation.ValidateChannelID(reminder.ChannelID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(reminder.Date); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+	if err := validation.ValidateUserID(reminder.UserID); err != nil {
+		return &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid user ID", Err: err}
+	}
+
 	pk, sk := reminderKey(reminder.ChannelID, reminder.Date, reminder.UserID, reminder.Time)
 
 	item := map[string]interface{}{
@@ -549,6 +669,14 @@ func (s *Store) SaveReminder(ctx context.Context, reminder *store.Reminder) erro
 
 // ListReminders lists all reminders for a channel and date.
 func (s *Store) ListReminders(ctx context.Context, channelID, date string) ([]*store.Reminder, error) {
+	// Validate inputs
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
 	pk := fmt.Sprintf("REMINDER#%s#%s", channelID, date)
 
 	keyCond := expression.Key("PK").Equal(expression.Value(pk))
@@ -598,6 +726,25 @@ func (s *Store) GetUsersWithoutResponse(
 	channelID, date string,
 	userIDs []string,
 ) ([]string, error) {
+	// Validate channel ID and date (user IDs are validated individually below)
+	if err := validation.ValidateChannelID(channelID); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid channel ID", Err: err}
+	}
+	if err := validation.ValidateDate(date); err != nil {
+		return nil, &store.Error{Code: "VALIDATION_ERROR", Message: "Invalid date", Err: err}
+	}
+
+	// Validate all user IDs
+	for _, userID := range userIDs {
+		if err := validation.ValidateUserID(userID); err != nil {
+			return nil, &store.Error{
+				Code:    "VALIDATION_ERROR",
+				Message: fmt.Sprintf("Invalid user ID: %s", userID),
+				Err:     err,
+			}
+		}
+	}
+
 	// Get all responses for the session
 	responses, err := s.ListUserResponses(ctx, channelID, date)
 	if err != nil {
