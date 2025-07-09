@@ -154,6 +154,7 @@ Resources:
     Properties:
       LogGroupName: !Sub "/aws/api-gateway/${AWS::StackName}-slack-api"
       RetentionInDays: 30
+      KmsKeyId: !GetAtt LogsKmsKey.Arn
 
   # Lambda Functions
   WebhookFunction:
@@ -272,24 +273,65 @@ Resources:
     Metadata:
       BuildMethod: go1.x
 
+  # KMS Key for CloudWatch Logs
+  LogsKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "KMS key for ${AWS::StackName} CloudWatch Logs"
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: Allow CloudWatch Logs
+            Effect: Allow
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+            Action:
+              - 'kms:Decrypt'
+              - 'kms:ReEncrypt'
+              - 'kms:GenerateDataKey'
+              - 'kms:CreateGrant'
+              - 'kms:DescribeKey'
+            Resource: '*'
+            Condition:
+              ArnLike:
+                'kms:EncryptionContext:aws:logs:arn': !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  LogsKmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-logs"
+      TargetKeyId: !Ref LogsKmsKey
+
   # CloudWatch Log Groups
   WebhookLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${WebhookFunction}"
       RetentionInDays: 30
+      KmsKeyId: !GetAtt LogsKmsKey.Arn
 
   SchedulerLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${SchedulerFunction}"
       RetentionInDays: 30
+      KmsKeyId: !GetAtt LogsKmsKey.Arn
 
   ProcessorLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${ProcessorFunction}"
       RetentionInDays: 30
+      KmsKeyId: !GetAtt LogsKmsKey.Arn
 
   # Alarms
   WebhookErrorAlarm:
