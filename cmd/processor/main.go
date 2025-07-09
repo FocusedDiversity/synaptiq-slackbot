@@ -11,6 +11,7 @@ import (
 
 	botcontext "github.com/synaptiq/standup-bot/context"
 	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
+	"github.com/synaptiq/standup-bot/internal/security"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
@@ -89,7 +90,7 @@ func processMessage(ctx context.Context, body string) error {
 	if err := json.Unmarshal([]byte(body), &task); err != nil {
 		// Bad message format - don't retry
 		botCtx.Logger().Error(ctx, "Invalid message format", err,
-			botcontext.Field{Key: "body", Value: lambdautil.SanitizeLogValue(body)},
+			botcontext.Field{Key: "body", Value: security.SanitizeLogValue(body)},
 		)
 		return nil
 	}
@@ -104,7 +105,7 @@ func processMessage(ctx context.Context, body string) error {
 
 	logger := botCtx.Logger()
 	logger.Info(ctx, "Processing task",
-		botcontext.Field{Key: "task_type", Value: lambdautil.SanitizeLogValue(task.Type)},
+		botcontext.Field{Key: "task_type", Value: security.SanitizeLogValue(task.Type)},
 	)
 
 	switch task.Type {
@@ -116,7 +117,7 @@ func processMessage(ctx context.Context, body string) error {
 		return processBulkReminder(ctx, task)
 	default:
 		logger.Warn(ctx, "Unknown task type",
-			botcontext.Field{Key: "task_type", Value: lambdautil.SanitizeLogValue(task.Type)},
+			botcontext.Field{Key: "task_type", Value: security.SanitizeLogValue(task.Type)},
 		)
 		// Don't retry unknown task types
 		return nil
@@ -135,11 +136,11 @@ func processSendWelcome(ctx context.Context, task TaskMessage) error {
 	cfg := botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
 	if !found {
-		return fmt.Errorf("channel %s not configured", lambdautil.SanitizeLogValue(channelID))
+		return fmt.Errorf("channel %s not configured", security.SanitizeLogValue(channelID))
 	}
 
 	// Build welcome message
-	channelRef := fmt.Sprintf("<#%s>", lambdautil.SanitizeLogValue(channelID))
+	channelRef := fmt.Sprintf("<#%s>", security.SanitizeLogValue(channelID))
 	blocks := slack.NewMessageBuilder().
 		AddHeader("Welcome to Daily Standups! 👋").
 		AddSection(fmt.Sprintf("You've been added to the daily standup for %s.", channelRef)).
@@ -166,8 +167,8 @@ func processSendWelcome(ctx context.Context, task TaskMessage) error {
 	}
 
 	botCtx.Logger().Info(ctx, "Sent welcome message",
-		botcontext.Field{Key: "user_id", Value: lambdautil.SanitizeLogValue(userID)},
-		botcontext.Field{Key: "channel_id", Value: lambdautil.SanitizeLogValue(channelID)},
+		botcontext.Field{Key: "user_id", Value: security.SanitizeLogValue(userID)},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 	)
 
 	return nil
@@ -194,10 +195,10 @@ func processGenerateReport(ctx context.Context, task TaskMessage) error {
 	// 3. Upload to S3 or send via Slack
 
 	botCtx.Logger().Info(ctx, "Report generation not yet implemented",
-		botcontext.Field{Key: "channel_id", Value: lambdautil.SanitizeLogValue(channelID)},
-		botcontext.Field{Key: "report_type", Value: lambdautil.SanitizeLogValue(reportType)},
-		botcontext.Field{Key: "start_date", Value: lambdautil.SanitizeLogValue(startDate)},
-		botcontext.Field{Key: "end_date", Value: lambdautil.SanitizeLogValue(endDate)},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
+		botcontext.Field{Key: "report_type", Value: security.SanitizeLogValue(reportType)},
+		botcontext.Field{Key: "start_date", Value: security.SanitizeLogValue(startDate)},
+		botcontext.Field{Key: "end_date", Value: security.SanitizeLogValue(endDate)},
 	)
 
 	return nil

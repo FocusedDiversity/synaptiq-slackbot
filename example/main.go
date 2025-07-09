@@ -54,6 +54,8 @@ func handleStandupRequest(ctx context.Context, botCtx botcontext.BotContext, use
 	ctx = botCtx.WithChannelID(ctx, channelID)
 
 	logger := botCtx.Logger()
+	// Note: In production code, always sanitize user input before logging
+	// Even though these are hardcoded here, we demonstrate best practices
 	logger.Info(ctx, "Handling standup request",
 		botcontext.Field{Key: "user_id", Value: userID},
 		botcontext.Field{Key: "channel_id", Value: channelID},

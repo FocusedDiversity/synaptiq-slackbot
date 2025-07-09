@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	botcontext "github.com/synaptiq/standup-bot/context"
-	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
+	"github.com/synaptiq/standup-bot/internal/security"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/store"
 )
@@ -75,11 +75,11 @@ func (s *Service) OpenStandupModal(ctx context.Context, triggerID, channelID, us
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
 	if !found {
-		return fmt.Errorf("channel not configured: %s", lambdautil.SanitizeLogValue(channelID))
+		return fmt.Errorf("channel not configured: %s", security.SanitizeLogValue(channelID))
 	}
 
 	if !channel.IsEnabled() {
-		return fmt.Errorf("standups not enabled for channel %s", lambdautil.SanitizeLogValue(channelID))
+		return fmt.Errorf("standups not enabled for channel %s", security.SanitizeLogValue(channelID))
 	}
 
 	// Ensure session exists
@@ -211,7 +211,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	cfg := s.botCtx.Config()
 	channel, found := cfg.ChannelByID(channelID)
 	if !found {
-		return fmt.Errorf("channel not configured: %s", lambdautil.SanitizeLogValue(channelID))
+		return fmt.Errorf("channel not configured: %s", security.SanitizeLogValue(channelID))
 	}
 
 	// Build summary
@@ -276,7 +276,7 @@ func (s *Service) postResponseToChannel(ctx context.Context, submission *Submiss
 
 	// Build message
 	builder := slack.NewMessageBuilder()
-	builder.AddSection(fmt.Sprintf("*Standup Update from <@%s>*", lambdautil.SanitizeLogValue(submission.UserID)))
+	builder.AddSection(fmt.Sprintf("*Standup Update from <@%s>*", security.SanitizeLogValue(submission.UserID)))
 
 	questions := channel.Questions()
 	for i, question := range questions {

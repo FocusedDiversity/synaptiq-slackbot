@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/synaptiq/standup-bot/internal/security"
 )
 
 // ModalBuilder helps build Slack modals.
@@ -240,9 +242,9 @@ func BuildSummaryMessage(date, headerTemplate string, responses []*UserResponseS
 
 	for _, resp := range responses {
 		if resp.Submitted {
-			submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", resp.UserID, resp.Time))
+			submitted = append(submitted, fmt.Sprintf("• <@%s> - %s", security.SanitizeLogValue(resp.UserID), resp.Time))
 		} else {
-			missing = append(missing, fmt.Sprintf("• <@%s>", resp.UserID))
+			missing = append(missing, fmt.Sprintf("• <@%s>", security.SanitizeLogValue(resp.UserID)))
 		}
 	}
 

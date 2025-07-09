@@ -9,6 +9,7 @@ import (
 
 	botcontext "github.com/synaptiq/standup-bot/context"
 	lambdautil "github.com/synaptiq/standup-bot/internal/lambda"
+	"github.com/synaptiq/standup-bot/internal/security"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
@@ -51,8 +52,8 @@ func handler(ctx context.Context, event *events.CloudWatchEvent) error {
 	ctx = botCtx.WithRequestID(ctx, event.ID)
 
 	logger.Info(ctx, "Scheduler triggered",
-		botcontext.Field{Key: "event_source", Value: lambdautil.SanitizeLogValue(event.Source)},
-		botcontext.Field{Key: "event_detail_type", Value: lambdautil.SanitizeLogValue(event.DetailType)},
+		botcontext.Field{Key: "event_source", Value: security.SanitizeLogValue(event.Source)},
+		botcontext.Field{Key: "event_detail_type", Value: security.SanitizeLogValue(event.DetailType)},
 	)
 
 	// Start tracer

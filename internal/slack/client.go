@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/synaptiq/standup-bot/internal/security"
 )
 
 // Client interface defines Slack API operations.
@@ -115,7 +117,7 @@ func (c *client) PostMessage(ctx context.Context, channel string, opts ...Messag
 	}
 
 	if !result.OK {
-		return "", fmt.Errorf("slack API error: %s", result.Error)
+		return "", fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return result.TS, nil
@@ -151,7 +153,7 @@ func (c *client) PostEphemeral(ctx context.Context, channel, userID string, opts
 	}
 
 	if !result.OK {
-		return "", fmt.Errorf("slack API error: %s", result.Error)
+		return "", fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return result.MessageTS, nil
@@ -186,7 +188,7 @@ func (c *client) UpdateMessage(ctx context.Context, channel, timestamp string, o
 	}
 
 	if !result.OK {
-		return fmt.Errorf("slack API error: %s", result.Error)
+		return fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return nil
@@ -214,7 +216,7 @@ func (c *client) DeleteMessage(ctx context.Context, channel, timestamp string) e
 	}
 
 	if !result.OK {
-		return fmt.Errorf("slack API error: %s", result.Error)
+		return fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return nil
@@ -242,7 +244,7 @@ func (c *client) OpenModal(ctx context.Context, triggerID string, modal *Modal) 
 	}
 
 	if !result.OK {
-		return fmt.Errorf("slack API error: %s", result.Error)
+		return fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return nil
@@ -270,7 +272,7 @@ func (c *client) UpdateModal(ctx context.Context, viewID string, modal *Modal) e
 	}
 
 	if !result.OK {
-		return fmt.Errorf("slack API error: %s", result.Error)
+		return fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return nil
@@ -298,7 +300,7 @@ func (c *client) PushModal(ctx context.Context, triggerID string, modal *Modal) 
 	}
 
 	if !result.OK {
-		return fmt.Errorf("slack API error: %s", result.Error)
+		return fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return nil
@@ -326,7 +328,7 @@ func (c *client) GetUserInfo(ctx context.Context, userID string) (*UserInfo, err
 	}
 
 	if !result.OK {
-		return nil, fmt.Errorf("slack API error: %s", result.Error)
+		return nil, fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return &result.User, nil
@@ -354,7 +356,7 @@ func (c *client) GetUserByEmail(ctx context.Context, email string) (*UserInfo, e
 	}
 
 	if !result.OK {
-		return nil, fmt.Errorf("slack API error: %s", result.Error)
+		return nil, fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return &result.User, nil
@@ -382,7 +384,7 @@ func (c *client) GetChannelInfo(ctx context.Context, channelID string) (*Convers
 	}
 
 	if !result.OK {
-		return nil, fmt.Errorf("slack API error: %s", result.Error)
+		return nil, fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return &result.Channel, nil
@@ -422,7 +424,7 @@ func (c *client) ListChannelMembers(ctx context.Context, channelID string) ([]st
 		}
 
 		if !result.OK {
-			return nil, fmt.Errorf("slack API error: %s", result.Error)
+			return nil, fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 		}
 
 		members = append(members, result.Members...)
@@ -461,7 +463,7 @@ func (c *client) OpenDM(ctx context.Context, userID string) (string, error) {
 	}
 
 	if !result.OK {
-		return "", fmt.Errorf("slack API error: %s", result.Error)
+		return "", fmt.Errorf("slack API error: %s", security.SanitizeLogValue(result.Error))
 	}
 
 	return result.Channel.ID, nil
@@ -494,7 +496,7 @@ func (c *client) callAPI(ctx context.Context, method string, params interface{})
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, security.SanitizeLogValue(string(respBody)))
 	}
 
 	return respBody, nil
@@ -532,7 +534,7 @@ func (c *client) callAPIWithParams(ctx context.Context, method string, params ma
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, security.SanitizeLogValue(string(respBody)))
 	}
 
 	return respBody, nil

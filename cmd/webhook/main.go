@@ -13,6 +13,7 @@ import (
 
 	botcontext "github.com/synaptiq/standup-bot/context"
 	"github.com/synaptiq/standup-bot/internal/lambda"
+	"github.com/synaptiq/standup-bot/internal/security"
 	"github.com/synaptiq/standup-bot/internal/slack"
 	"github.com/synaptiq/standup-bot/internal/standup"
 	"github.com/synaptiq/standup-bot/internal/store"
@@ -271,7 +272,7 @@ func handleEvent(ctx context.Context, body string) (events.APIGatewayProxyRespon
 		botCtx.Logger().Warn(ctx, "Rate limited by Slack")
 		return lambda.OK(""), nil
 	default:
-		return lambda.BadRequest(fmt.Sprintf("Unknown event type: %s", lambda.SanitizeLogValue(wrapper.Type))), nil
+		return lambda.BadRequest(fmt.Sprintf("Unknown event type: %s", security.SanitizeLogValue(wrapper.Type))), nil
 	}
 }
 
