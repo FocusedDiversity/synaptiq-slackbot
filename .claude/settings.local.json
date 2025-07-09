@@ -47,7 +47,10 @@
       "Bash(gh run watch:*)",
       "Bash(echo \"Run status: $?\")",
       "Bash(gh pr view:*)",
-      "Bash(gh pr checks:*)"
+      "Bash(gh pr checks:*)",
+      "Bash(SKIP_CI_CHECKS=1 git push origin feat/initial-modules)",
+      "Bash(pre-commit run:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

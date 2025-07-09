@@ -82,7 +82,7 @@ if command -v codeql &> /dev/null; then
     if [ -d ".codeql-db" ]; then
         # Run security-and-quality queries like in GitHub Actions
         if codeql database analyze .codeql-db --format=sarif-latest --output=/dev/null \
-            --download go-security-and-quality 2>&1 | grep -q "error\|warning"; then
+            codeql/go-queries:codeql-suites/go-security-and-quality.qls 2>&1 | grep -q "error\|warning"; then
             echo "⚠️  CodeQL found potential issues (run full scan in CI)"
         else
             echo "✅ No critical CodeQL issues"

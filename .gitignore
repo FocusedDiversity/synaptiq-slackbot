@@ -54,3 +54,4 @@ licenses.txt
 
 # CodeQL database
 .codeql-db/
+.codeql-results.sarif

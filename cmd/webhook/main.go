@@ -180,7 +180,7 @@ func handleInteraction(ctx context.Context, payloadStr string) (events.APIGatewa
 
 	logger := botCtx.Logger()
 	logger.Info(ctx, "Interaction received",
-		botcontext.Field{Key: "type", Value: security.SanitizeLogValue(string(payload.Type))},
+		botcontext.Field{Key: "type", Value: security.SanitizeLogValue(payload.Type)},
 		botcontext.Field{Key: "callback_id", Value: security.SanitizeLogValue(payload.CallbackID)},
 	)
 

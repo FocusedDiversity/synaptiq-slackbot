@@ -56,7 +56,7 @@ repos:
 
       - id: codeql
         name: codeql security scan
-        entry: bash -c 'if command -v codeql &>/dev/null; then codeql database create .codeql-db --language=go --overwrite --quiet && codeql database analyze .codeql-db --format=sarif-latest --output=.codeql-results.sarif --download go-security-and-quality --quiet && rm -f .codeql-results.sarif && echo "CodeQL scan complete"; else echo "CodeQL not installed, skipping"; fi'
+        entry: bash -c 'if command -v codeql &>/dev/null; then codeql database create .codeql-db --language=go --overwrite --quiet && codeql database analyze .codeql-db --format=sarif-latest --output=.codeql-results.sarif codeql/go-queries:codeql-suites/go-security-and-quality.qls --quiet && rm -f .codeql-results.sarif && echo "CodeQL scan complete"; else echo "CodeQL not installed, skipping"; fi'
         language: system
         pass_filenames: false
         types: [go]
