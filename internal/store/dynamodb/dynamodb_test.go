@@ -153,8 +153,8 @@ func TestCreateSession(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		mockClient.On("PutItem", mock.Anything, mock.MatchedBy(func(input *dynamodb.PutItemInput) bool {
 			return *input.TableName == "test-table" &&
-				input.Item["PK"].(*types.AttributeValueMemberS).Value == "SESSION#C123456#2024-01-15" &&
-				input.Item["SK"].(*types.AttributeValueMemberS).Value == "SESSION#C123456#2024-01-15" &&
+				input.Item["PK"].(*types.AttributeValueMemberS).Value == "SESSION#C1234567890#2024-01-15" &&
+				input.Item["SK"].(*types.AttributeValueMemberS).Value == "SESSION#C1234567890#2024-01-15" &&
 				*input.ConditionExpression == "attribute_not_exists(PK)"
 		})).Return(&dynamodb.PutItemOutput{}, nil).Once()
 
