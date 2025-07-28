@@ -6,6 +6,7 @@ import (
 	"time"
 
 	botcontext "github.com/synaptiq/standup-bot/context"
+	"github.com/synaptiq/standup-bot/internal/security"
 	"github.com/synaptiq/standup-bot/internal/store"
 )
 
@@ -38,7 +39,7 @@ func (s *Scheduler) ProcessScheduledTasks(ctx context.Context) error {
 
 	logger.Info(ctx, "Processing scheduled tasks",
 		botcontext.Field{Key: "config_count", Value: len(configs)},
-		botcontext.Field{Key: "time", Value: now.Format("15:04")},
+		botcontext.Field{Key: "time", Value: security.SanitizeLogValue(now.Format("15:04"))},
 	)
 
 	for _, config := range configs {
@@ -53,14 +54,14 @@ func (s *Scheduler) ProcessScheduledTasks(ctx context.Context) error {
 		// Process reminders
 		if err := s.processReminders(ctx, config, channelTime); err != nil {
 			logger.Error(ctx, "Failed to process reminders", err,
-				botcontext.Field{Key: "channel_id", Value: config.ChannelID},
+				botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(config.ChannelID)},
 			)
 		}
 
 		// Process daily summary
 		if err := s.processDailySummary(ctx, config, channelTime); err != nil {
 			logger.Error(ctx, "Failed to process summary", err,
-				botcontext.Field{Key: "channel_id", Value: config.ChannelID},
+				botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(config.ChannelID)},
 			)
 		}
 	}
@@ -202,7 +203,7 @@ func (s *Scheduler) StartDailyStandups(ctx context.Context) error {
 		_, err := s.service.StartStandupSession(ctx, config.ChannelID)
 		if err != nil {
 			logger.Error(ctx, "Failed to start standup session", err,
-				botcontext.Field{Key: "channel_id", Value: config.ChannelID},
+				botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(config.ChannelID)},
 			)
 			continue
 		}

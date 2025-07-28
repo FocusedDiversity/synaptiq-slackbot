@@ -69,8 +69,11 @@ func WithLogging(botCtx botcontext.BotContext) Middleware {
 			// Log request
 			logger.Info(ctx, "Request received",
 				botcontext.Field{Key: "method", Value: request.HTTPMethod},
-				botcontext.Field{Key: "path", Value: request.Path},
-				botcontext.Field{Key: "source_ip", Value: request.RequestContext.Identity.SourceIP},
+				botcontext.Field{Key: "path", Value: security.SanitizeLogValue(request.Path)},
+				botcontext.Field{
+					Key:   "source_ip",
+					Value: security.SanitizeLogValue(request.RequestContext.Identity.SourceIP),
+				},
 			)
 
 			// Process request

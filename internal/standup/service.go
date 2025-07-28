@@ -38,7 +38,7 @@ func (s *Service) StartStandupSession(ctx context.Context, channelID string) (*s
 	existingSession, err := s.store.GetSession(ctx, channelID, today)
 	if err == nil && existingSession != nil {
 		logger.Info(ctx, "Session already exists",
-			botcontext.Field{Key: "channel_id", Value: channelID},
+			botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 			botcontext.Field{Key: "date", Value: today},
 		)
 		return existingSession, nil
@@ -63,8 +63,8 @@ func (s *Service) StartStandupSession(ctx context.Context, channelID string) (*s
 	}
 
 	logger.Info(ctx, "Started new standup session",
-		botcontext.Field{Key: "session_id", Value: session.SessionID},
-		botcontext.Field{Key: "channel_id", Value: channelID},
+		botcontext.Field{Key: "session_id", Value: security.SanitizeLogValue(session.SessionID)},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 	)
 
 	return session, nil
@@ -118,8 +118,8 @@ func (s *Service) SubmitStandupResponse(ctx context.Context, submission *Submiss
 	}
 
 	logger.Info(ctx, "Saved standup response",
-		botcontext.Field{Key: "user_id", Value: submission.UserID},
-		botcontext.Field{Key: "channel_id", Value: submission.ChannelID},
+		botcontext.Field{Key: "user_id", Value: security.SanitizeLogValue(submission.UserID)},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(submission.ChannelID)},
 	)
 
 	// Post to channel in thread if threading is enabled
@@ -160,14 +160,14 @@ func (s *Service) SendReminders(ctx context.Context, channelID, reminderTime str
 	for _, userID := range missingUsers {
 		if err := s.sendReminderToUser(ctx, userID, channelID, channelConfig.ChannelName, reminderTime); err != nil {
 			logger.Error(ctx, "Failed to send reminder", err,
-				botcontext.Field{Key: "user_id", Value: userID},
+				botcontext.Field{Key: "user_id", Value: security.SanitizeLogValue(userID)},
 			)
 			continue
 		}
 	}
 
 	logger.Info(ctx, "Sent reminders",
-		botcontext.Field{Key: "channel_id", Value: channelID},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 		botcontext.Field{Key: "reminder_count", Value: len(missingUsers)},
 	)
 
@@ -196,7 +196,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	// Check if summary already posted
 	if session.SummaryPosted {
 		logger.Info(ctx, "Summary already posted",
-			botcontext.Field{Key: "channel_id", Value: channelID},
+			botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 		)
 		return nil
 	}
@@ -258,7 +258,7 @@ func (s *Service) PostDailySummary(ctx context.Context, channelID string) error 
 	}
 
 	logger.Info(ctx, "Posted daily summary",
-		botcontext.Field{Key: "channel_id", Value: channelID},
+		botcontext.Field{Key: "channel_id", Value: security.SanitizeLogValue(channelID)},
 		botcontext.Field{Key: "total_users", Value: len(summaries)},
 		botcontext.Field{Key: "responded", Value: len(responses)},
 	)
